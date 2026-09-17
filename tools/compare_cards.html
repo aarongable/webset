@@ -1,6 +1,6 @@
 <!doctype html><meta charset="utf-8">
 <style>
-:root{--set-red:#E4232A;--set-green:#17A34A;--set-purple:#7E2EA0}
+:root{--set-red:#EE1C2E;--set-green:#05A86A;--set-purple:#8B3FA6}
 body{margin:0;background:#2b6b3a;padding:16px;font:14px sans-serif;color:#fff}
 .row{display:flex;gap:16px;margin-bottom:14px;align-items:flex-start}
 canvas{width:420px;height:270px;display:block;border-radius:12px}
@@ -14,13 +14,15 @@ h3{margin:0 0 6px;font-weight:500}
 <script>
 document.getElementById('defs').innerHTML = Cards.stripeDefsSVG();
 const items = [
-  { name: 'three solid purple ovals',   rect: [2600, 1560, 1000, 660], attrs: [2, 2, 0, 0] },
-  { name: 'three open purple ovals',    rect: [1540, 1560, 1010, 660], attrs: [2, 2, 0, 2] },
-  { name: 'three solid red squiggles',  rect: [1540,  860, 1010, 640], attrs: [0, 2, 2, 0] },
-  { name: 'three solid purple diamonds',rect: [ 500,  860, 1000, 640], attrs: [2, 2, 1, 0] },
-  { name: 'three striped red squiggles',rect: [2600,  150, 1000, 650], attrs: [0, 2, 2, 1] },
-  { name: 'two striped red diamonds',   rect: [2600, 2267, 1000, 640], attrs: [0, 1, 1, 1] },
-  { name: 'one striped green oval',     rect: [2600,  860, 1000, 640], attrs: [1, 0, 0, 1] },
+  { name: 'three solid green diamonds', rect: [300, 340, 2450, 1660], attrs: [1, 2, 1, 0] },
+  { name: 'three striped purple ovals', rect: [2860, 420, 2380, 1580], attrs: [2, 2, 0, 1] },
+  { name: 'three open red squiggles',   rect: [5400, 500, 2420, 1590], attrs: [0, 2, 2, 2] },
+  { name: 'two solid purple diamonds',  rect: [300, 1960, 2380, 1560], attrs: [2, 1, 1, 0] },
+  { name: 'two striped red ovals',      rect: [2820, 2060, 2370, 1540], attrs: [0, 1, 0, 1] },
+  { name: 'two open green squiggles',   rect: [5400, 2120, 2400, 1510], attrs: [1, 1, 2, 2] },
+  { name: 'one solid red diamond',      rect: [270, 3590, 2350, 1500], attrs: [0, 0, 1, 0] },
+  { name: 'one striped green oval',     rect: [2770, 3590, 2350, 1530], attrs: [1, 0, 0, 1] },
+  { name: 'one open purple squiggle',   rect: [5380, 3610, 2380, 1510], attrs: [2, 0, 2, 2] },
 ];
 const img = new Image();
 img.onload = () => {
@@ -32,11 +34,11 @@ img.onload = () => {
     c.getContext('2d').drawImage(img, sx, sy, sw, sh, 0, 0, 1000, 643);
     const card = document.createElement('div'); card.className = 'card';
     card.innerHTML = Cards.renderCardSVG(Cards.fromAttrs(it.attrs));
-    const left = document.createElement('div'); left.innerHTML = '<h3>real (older deck): ' + it.name + '</h3>'; left.appendChild(c);
+    const left = document.createElement('div'); left.innerHTML = '<h3>your card: ' + it.name + '</h3>'; left.appendChild(c);
     const right = document.createElement('div'); right.innerHTML = '<h3>rendered</h3>'; right.appendChild(card);
     row.appendChild(left); row.appendChild(right); rows.appendChild(row);
   }
   document.title = 'OK';
 };
-img.src = 'p_chail.jpg';
+img.src = 'deck_1998.jpg' // the owner's photo, rotated to landscape (not checked in);
 </script>

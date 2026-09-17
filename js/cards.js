@@ -99,32 +99,33 @@
   // Symbols are drawn in a 100 x 200 box as their OUTER boundary, then scaled
   // by SYM_SCALE onto the card. The outline stroke is clipped to the inside of
   // the shape so it never enlarges the symbol. Every number below was measured
-  // from photographs of real cards (an older printing with narrower symbols,
-  // matching the 1998 deck), as fractions of the card's short side:
+  // from a photograph of the owner's 1998 deck (tools/measure_card.html), as
+  // fractions of the card's short side:
   //
   //             long   short  centre pitch
-  //   oval      0.689  0.317  0.440      (a stadium)
-  //   diamond   0.720  0.335  0.445      (sharp rhombus)
-  //   squiggle  0.666  0.300  0.417      (traced outline)
-  //   outline stroke 0.020, stripe pitch 0.0195, stripe line 0.0078
+  //   oval      0.678  0.332  0.456      (a stadium, 2.04:1)
+  //   diamond   0.715  0.347  0.448      (sharp rhombus, 2.06:1)
+  //   squiggle  0.650  0.314  0.410      (traced outline)
+  //   outline stroke 0.018, stripe pitch 0.0193, stripe line 0.0055
   //
-  // The box is scaled so the oval's length of 184 box units becomes 0.689 of 225.
+  // The box is scaled so the oval's length of 184 box units becomes 0.678 of 225.
 
   const CARD_W = 350, CARD_H = 225;
-  const SYM_SCALE = 0.8424;
+  const SYM_SCALE = 0.829;
   const SYM_W = 100 * SYM_SCALE, SYM_H = 200 * SYM_SCALE;
-  const PITCH = { oval: 99, diamond: 100, squiggle: 94 }; // card units, centre to centre
-  const STROKE = 5.34;  // visible stroke in box units (drawn doubled, clipped to the inside)
+  const PITCH = { oval: 102.6, diamond: 100.8, squiggle: 92.3 }; // card units, centre to centre
+  const STROKE = 4.9;   // visible stroke in box units (drawn doubled, clipped to the inside)
 
-  // Stripe geometry in box units.
-  const STRIPE_PITCH = 5.2, STRIPE_WIDTH = 2.1;
+  // Stripe geometry in box units (the line is drawn a touch heavier than the
+  // measured 1.5 so it survives small screens).
+  const STRIPE_PITCH = 5.24, STRIPE_WIDTH = 1.7;
 
   const SHAPE_PATHS = {
-    oval: 'M50 8 A42.35 42.35 0 0 1 92.35 50.35 V149.65 A42.35 42.35 0 0 1 7.65 149.65 V50.35 A42.35 42.35 0 0 1 50 8 Z',
-    diamond: 'M50 3.85 L94.75 100 L50 196.15 L5.25 100 Z',
-    // Squiggle: traced from a photograph of a real card (tools/trace_squiggle.html,
+    oval: 'M50 8 A45.1 45.1 0 0 1 95.1 53.1 V146.9 A45.1 45.1 0 0 1 4.9 146.9 V53.1 A45.1 45.1 0 0 1 50 8 Z',
+    diamond: 'M50 3 L97.1 100 L50 197 L2.9 100 Z',
+    // Squiggle: traced from a photograph of the owner's card (tools/trace_squiggle.html,
     // tools/squiggle_trace.json), symmetrized and fitted by tools/squiggle.py.
-    squiggle: 'M30.9 11.3 C34.6 10.8 38.6 11.0 42.3 11.4 C46.1 11.9 49.9 12.8 53.5 14.1 C57.1 15.3 60.6 16.9 63.9 18.9 C67.2 20.8 70.3 23.2 73.0 25.8 C75.8 28.4 78.3 31.4 80.3 34.6 C82.3 37.8 84.0 41.4 85.2 45.0 C86.3 48.6 87.0 52.4 87.4 56.2 C87.8 60.0 87.8 63.9 87.7 67.7 C87.5 71.5 87.0 75.3 86.3 79.1 C85.6 82.8 84.6 86.5 83.5 90.2 C82.4 93.9 81.0 97.4 79.8 101.0 C78.6 104.7 77.1 108.3 76.3 112.0 C75.4 115.7 74.8 119.5 74.7 123.3 C74.6 127.1 75.0 131.0 75.8 134.7 C76.5 138.4 77.8 142.1 79.2 145.7 C80.6 149.2 82.6 152.5 84.2 156.0 C85.8 159.5 88.1 162.9 88.7 166.5 C89.4 170.1 89.6 174.5 88.2 177.7 C86.7 180.9 83.2 183.7 80.1 185.5 C76.9 187.3 72.8 188.2 69.1 188.7 C65.4 189.2 61.4 189.0 57.7 188.6 C53.9 188.1 50.1 187.2 46.5 185.9 C42.9 184.7 39.4 183.1 36.1 181.1 C32.8 179.2 29.7 176.8 27.0 174.2 C24.2 171.6 21.7 168.6 19.7 165.4 C17.7 162.2 16.0 158.6 14.8 155.0 C13.7 151.4 13.0 147.6 12.6 143.8 C12.2 140.0 12.2 136.1 12.3 132.3 C12.5 128.5 13.0 124.7 13.7 120.9 C14.4 117.2 15.4 113.5 16.5 109.8 C17.6 106.1 19.0 102.6 20.2 99.0 C21.4 95.3 22.9 91.7 23.7 88.0 C24.6 84.3 25.2 80.5 25.3 76.7 C25.4 72.9 25.0 69.0 24.2 65.3 C23.5 61.6 22.2 57.9 20.8 54.3 C19.4 50.8 17.4 47.5 15.8 44.0 C14.2 40.5 11.9 37.1 11.3 33.5 C10.6 29.9 10.4 25.5 11.8 22.3 C13.3 19.1 16.8 16.3 19.9 14.5 C23.1 12.7 27.2 11.8 30.9 11.3 Z',
+    squiggle: 'M36.4 12.0 C40.2 11.9 44.1 12.2 47.8 12.9 C51.6 13.6 55.3 14.7 58.9 16.1 C62.4 17.6 65.9 19.3 69.0 21.5 C72.2 23.6 75.2 26.2 77.7 29.0 C80.3 31.8 82.6 35.0 84.3 38.4 C86.0 41.7 87.3 45.5 88.2 49.2 C89.0 52.9 89.4 56.8 89.6 60.6 C89.7 64.4 89.5 68.3 89.1 72.1 C88.6 75.9 87.9 79.7 86.9 83.4 C86.0 87.1 84.8 90.8 83.6 94.4 C82.3 98.0 80.7 101.5 79.5 105.2 C78.4 108.8 77.1 112.5 76.5 116.3 C75.9 120.0 75.7 123.9 76.0 127.7 C76.3 131.5 77.2 135.3 78.3 139.0 C79.5 142.6 81.2 146.1 82.9 149.5 C84.5 153.0 86.9 156.2 88.1 159.8 C89.4 163.3 90.8 167.4 90.3 170.9 C89.7 174.4 87.6 178.3 85.0 180.8 C82.5 183.4 78.5 185.0 75.0 186.2 C71.4 187.4 67.4 187.9 63.6 188.0 C59.8 188.1 55.9 187.8 52.2 187.1 C48.4 186.4 44.7 185.3 41.1 183.9 C37.6 182.4 34.1 180.7 31.0 178.5 C27.8 176.4 24.8 173.8 22.3 171.0 C19.7 168.2 17.4 165.0 15.7 161.6 C14.0 158.3 12.7 154.5 11.8 150.8 C11.0 147.1 10.6 143.2 10.4 139.4 C10.3 135.6 10.5 131.7 10.9 127.9 C11.4 124.1 12.1 120.3 13.1 116.6 C14.0 112.9 15.2 109.2 16.4 105.6 C17.7 102.0 19.3 98.5 20.5 94.8 C21.6 91.2 22.9 87.5 23.5 83.7 C24.1 80.0 24.3 76.1 24.0 72.3 C23.7 68.5 22.8 64.7 21.7 61.0 C20.5 57.4 18.8 53.9 17.1 50.5 C15.5 47.0 13.1 43.8 11.9 40.2 C10.6 36.7 9.2 32.6 9.7 29.1 C10.3 25.6 12.4 21.7 15.0 19.2 C17.5 16.6 21.5 15.0 25.0 13.8 C28.6 12.6 32.6 12.1 36.4 12.0 Z',
   };
 
   function centers(shapeIdx, number) {

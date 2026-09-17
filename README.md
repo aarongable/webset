@@ -77,13 +77,14 @@ final card face-down and nothing recorded to stats. The state is built by
 shuffling a full deck and removing 23 random valid sets, so the leftovers are
 exactly what a real game could end with.
 
-Card geometry (symbol sizes, spacing, stroke, stripes, and the squiggle
-outline) was measured from photographs of real cards with the pages in
-`tools/`. Two printings were measured; the app follows the older one, which
-has narrower symbols, wider gaps and a thinner outline, matching the 1998
-deck. The numbers are in the comments of `tools/squiggle.py` and `js/cards.js`.
-The pages expect the photos next to them (`solver_IMG_5254.JPG`, `p_chail.jpg`);
-the traced squiggle outline is checked in as `tools/squiggle_trace.json`.
+Card geometry (symbol shapes, sizes, spacing, outline, stripes) and ink
+colours were measured from a photograph of the owner's 1998 deck with the
+pages in `tools/`: `trace_squiggle.html` traces an outline, `measure_card.html`
+reports symbol extents and spacing, `sample_colors.html` reads white-balanced
+ink colours, and `compare_cards.html` shows real cards beside rendered ones.
+They expect the photo, rotated to landscape, as `tools/deck_1998.jpg` (not
+checked in). The numbers are in the comments of `tools/squiggle.py` and
+`js/cards.js`; the traced squiggle outline is `tools/squiggle_trace.json`.
 
 Tests run with `node --test tests/`, or without Node by opening
 `tests/run.html` in a browser, for example:

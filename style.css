@@ -3,10 +3,12 @@
 :root {
   color-scheme: light dark;
 
-  /* Card ink: approximations of the original 1990s deck. */
-  --set-red: #E4232A;
-  --set-green: #17A34A;
-  --set-purple: #7E2EA0;
+  /* Card ink, sampled from a white-balanced photograph of a 1998 deck
+     (tools/sample_colors.html) and pulled back slightly from the clipped
+     values: the green is a teal, the purple is on the light side. */
+  --set-red: #EE1C2E;
+  --set-green: #05A86A;
+  --set-purple: #8B3FA6;
 
   --bg: #ece9e2;
   --fg: #1d1d1b;

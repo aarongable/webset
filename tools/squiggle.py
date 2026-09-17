@@ -13,21 +13,20 @@ exactly point-symmetric (the real symbol is; the photo has a little camera
 skew), scaled to its measured length relative to the oval, and written as a
 closed Catmull-Rom spline of cubic Beziers in a 100x200 box.
 
-Measurements (card short side = 1.0). Two printings were measured; the
-older one (narrower symbols, wider gaps, thinner outline) is what the app
-uses because it matches the 1998 deck:
+Measurements (card short side = 1.0) from the owner's 1998 deck, which is
+what the app uses; two other printings measured earlier are kept for reference:
 
-                 modern deck              older deck (used)
-  oval      long 0.686 short 0.345     long 0.689 short 0.317 pitch 0.440
-  diamond   long 0.705 short 0.345     long 0.720 short 0.335 pitch 0.445
-  squiggle  long 0.620 short 0.273     long 0.666 short 0.300 pitch 0.417
-  stroke 0.025, stripe pitch 0.0194    stroke 0.020, stripe pitch 0.0195, line 0.0078
+                 1998 deck (used)                 modern            older print
+  oval      long 0.678 short 0.332 pitch 0.456   0.686/0.345       0.689/0.317
+  diamond   long 0.715 short 0.347 pitch 0.448   0.705/0.345       0.720/0.335
+  squiggle  long 0.650 short 0.314 pitch 0.410   0.620/0.273       0.666/0.300
+  outline stroke 0.018, stripe pitch 0.0193, stripe line 0.0055
 """
 import json
 import math
 import sys
 
-LONG_AXIS = 178.0          # measured: 0.666 of the card's short side (oval = 184 -> 0.689)
+LONG_AXIS = 176.0          # measured: 0.650 of the card's short side (oval = 184 -> 0.678)
 POINTS = 40                # control points kept around the outline
 
 

@@ -1,0 +1,27 @@
+<!doctype html><meta charset="utf-8"><canvas id="c" style="display:none"></canvas><pre id="out"></pre>
+<script>
+const img = new Image();
+img.onload = () => {
+  const c = document.getElementById('c'); c.width = img.naturalWidth; c.height = img.naturalHeight;
+  const ctx = c.getContext('2d'); ctx.drawImage(img, 0, 0);
+  const median = (a) => { const s = a.slice().sort((x, y) => x - y); return s[s.length >> 1]; };
+  const sample = (x, y, w, h, pred) => { const d = ctx.getImageData(x, y, w, h).data; const R = [], G = [], B = []; for (let i = 0; i < d.length; i += 4) { if (!pred || pred(d[i], d[i+1], d[i+2])) { R.push(d[i]); G.push(d[i+1]); B.push(d[i+2]); } } return [median(R), median(G), median(B), R.length]; };
+  // card face (white reference) patches next to each diamond, and the diamond centres
+  const cards = {
+    green:  { face: [600, 1500, 200, 200], ink: [1400, 1050, 180, 250] },   // 3 green diamonds card: middle diamond centre ~ (1490,1170)
+    purple: { face: [600, 3100, 200, 200], ink: [1000, 2640, 150, 250] },   // 2 purple diamonds: left diamond centre
+    red:    { face: [600, 4700, 200, 200], ink: [1330, 4260, 150, 250] },   // 1 red diamond centre
+  };
+  const out = {};
+  for (const [name, r] of Object.entries(cards)) {
+    const f = sample(...r.face, (R, G, B) => R + G + B > 450);
+    const i = sample(...r.ink, (R, G, B) => Math.max(R, G, B) - Math.min(R, G, B) > 40);
+    // white balance: scale each channel so the face maps to 255, clamp
+    const wb = [0, 1, 2].map((k) => Math.min(255, Math.round(i[k] * 255 / f[k])));
+    out[name] = { face: f.slice(0, 3), ink: i.slice(0, 3), n: i[3], balanced: wb, hex: '#' + wb.map((v) => v.toString(16).padStart(2, '0')).join('') };
+  }
+  document.getElementById('out').textContent = JSON.stringify(out);
+  document.title = 'OK';
+};
+img.src = 'deck_1998.jpg';
+</script>
