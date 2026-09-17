@@ -1,0 +1,48 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>webset tests</title>
+<pre id="out"></pre>
+<script src="../js/cards.js"></script>
+<script src="../js/game.js"></script>
+<script src="../js/stats.js"></script>
+<script>
+// Minimal shim so tests/logic.test.js (written for node:test) also runs in a browser.
+(function () {
+  const tests = [];
+  function test(name, fn) { tests.push({ name, fn }); }
+  function fail(msg, a, b) { throw new Error(msg + (arguments.length > 1 ? `\n  actual:   ${JSON.stringify(a)}\n  expected: ${JSON.stringify(b)}` : '')); }
+  function deepEq(a, b) {
+    if (Object.is(a, b)) return true;
+    if (typeof a !== 'object' || typeof b !== 'object' || !a || !b) return false;
+    if (Array.isArray(a) !== Array.isArray(b)) return false;
+    const ka = Object.keys(a), kb = Object.keys(b);
+    if (ka.length !== kb.length) return false;
+    return ka.every((k) => deepEq(a[k], b[k]));
+  }
+  const assert = {
+    ok: (v, m) => { if (!v) fail(m || 'expected truthy'); },
+    equal: (a, b, m) => { if (!Object.is(a, b)) fail(m || 'not equal', a, b); },
+    notEqual: (a, b, m) => { if (Object.is(a, b)) fail(m || 'unexpectedly equal', a, b); },
+    deepEqual: (a, b, m) => { if (!deepEq(a, b)) fail(m || 'not deep equal', a, b); },
+  };
+  window.require = function (name) {
+    if (name === 'node:test') return test;
+    if (name === 'node:assert/strict') return assert;
+    if (/cards\.js$/.test(name)) return window.Cards;
+    if (/game\.js$/.test(name)) return { Game: window.Game, shuffle: window.shuffle };
+    if (/stats\.js$/.test(name)) return window.StatsLib;
+    throw new Error('unknown module ' + name);
+  };
+  window.addEventListener('load', () => {
+    const out = document.getElementById('out');
+    let pass = 0, failCount = 0;
+    for (const t of tests) {
+      try { t.fn(); pass++; out.textContent += `ok - ${t.name}\n`; }
+      catch (e) { failCount++; out.textContent += `not ok - ${t.name}\n  ${e.message.replace(/\n/g, '\n  ')}\n`; }
+    }
+    out.textContent += `\n# pass ${pass}\n# fail ${failCount}\n`;
+    document.title = failCount ? 'FAIL' : 'PASS';
+  });
+})();
+</script>
+<script src="logic.test.js"></script>

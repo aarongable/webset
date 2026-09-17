@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#ece9e2">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#1b1c20">
+<title>Set</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<svg width="0" height="0" class="svg-defs" aria-hidden="true" focusable="false"><defs id="svg-defs"></defs></svg>
+
+<main id="app">
+  <header class="bar" id="bar">
+    <div class="status" id="status" aria-live="polite">
+      <span><b id="found">0</b> sets</span><span class="dot">·</span><span><b id="left">69</b> left</span>
+    </div>
+    <div class="actions">
+      <button id="no-set" class="btn primary" type="button">No Set</button>
+      <div class="menu-wrap">
+        <button id="menu-btn" class="btn icon" type="button" aria-label="Menu" aria-haspopup="true" aria-expanded="false">&#8943;</button>
+        <div id="menu" class="menu" role="menu" hidden>
+          <button class="menu-item" role="menuitem" type="button" data-action="stats">Stats</button>
+          <button class="menu-item" role="menuitem" type="button" data-action="new">New game</button>
+          <div class="menu-help">
+            <div><kbd>Q</kbd>–<kbd>U</kbd> <kbd>A</kbd>–<kbd>J</kbd> <kbd>Z</kbd>–<kbd>M</kbd> select cards</div>
+            <div><kbd>Space</kbd> No Set &nbsp; <kbd>Esc</kbd> clear &nbsp; <kbd>S</kbd> stats</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+  <section id="board" class="board" aria-label="Cards on the table"></section>
+</main>
+
+<!-- Last card guess panel -->
+<div id="guess-overlay" class="overlay" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="guess-title">
+    <h2 id="guess-title">The last card</h2>
+    <p class="muted" id="guess-intro">Guess what it is, or just reveal it.</p>
+    <div id="guess-rows" class="guess-rows"></div>
+    <div id="guess-result" class="guess-result" hidden></div>
+    <div class="sheet-actions">
+      <button class="btn" type="button" id="guess-close">Keep it face-down</button>
+      <button class="btn primary" type="button" id="guess-reveal">Reveal</button>
+      <button class="btn primary" type="button" id="guess-done" hidden>Done</button>
+    </div>
+  </div>
+</div>
+
+<!-- Game over summary -->
+<div id="over-overlay" class="overlay" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="over-title">
+    <h2 id="over-title">Deck finished</h2>
+    <div id="over-body"></div>
+    <div class="sheet-actions">
+      <button class="btn" type="button" id="over-stats">Stats</button>
+      <button class="btn primary" type="button" id="over-new">New game</button>
+    </div>
+  </div>
+</div>
+
+<!-- Stats -->
+<div id="stats-overlay" class="overlay scroll" hidden>
+  <div class="page" role="dialog" aria-modal="true" aria-labelledby="stats-title">
+    <div class="page-head">
+      <h2 id="stats-title">Your stats</h2>
+      <button class="btn icon" type="button" id="stats-close" aria-label="Close">&#10005;</button>
+    </div>
+    <div id="stats-body"></div>
+    <div class="page-foot">
+      <button class="btn danger" type="button" id="stats-clear">Clear all stats</button>
+    </div>
+  </div>
+</div>
+
+<script src="js/cards.js"></script>
+<script src="js/game.js"></script>
+<script src="js/stats.js"></script>
+<script src="js/ui.js"></script>
+</body>
+</html>
