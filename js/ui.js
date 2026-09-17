@@ -671,6 +671,15 @@
   // ---- go -------------------------------------------------------------------------
   newGame();
 
+  // Offline support / installability. Service workers need http(s); when the
+  // page is opened from disk this is simply skipped.
+  if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
+    navigator.serviceWorker.register('./sw.js')
+      .then((reg) => { document.documentElement.dataset.sw = 'registered'; reg.update(); })
+      .catch(() => { document.documentElement.dataset.sw = 'failed'; });
+    navigator.serviceWorker.ready.then(() => { document.documentElement.dataset.sw = 'ready'; });
+  }
+
   // Debug hooks for the console and tests. dealExtra() deals three cards
   // regardless of whether a set is on the table (for layout checks).
   function dealExtra() {

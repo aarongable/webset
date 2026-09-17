@@ -14,6 +14,11 @@ python3 -m http.server
 
 No build step, no dependencies. Everything is plain HTML, CSS and JavaScript.
 
+Served over HTTPS (GitHub Pages works) it is an installable PWA: a service
+worker caches the app so it opens offline, and the manifest gives it a home
+screen icon. Use the browser's install option (or Share → Add to Home Screen
+on iOS). When opened straight from disk the service worker is skipped.
+
 - Tap or click three cards. Multi-touch works, so you can tap all three at once.
 - **No Set** deals three more cards, but only if there really is no set on the
   table. A false call is refused silently and counted.
@@ -60,6 +65,7 @@ Sets from abandoned games still count toward the kind analytics.
 ```
 index.html   markup shell
 style.css    layout, card states, dark mode
+manifest.webmanifest, sw.js, icons/   PWA manifest, service worker, icons
 js/cards.js  card encoding, set logic, SVG rendering
 js/game.js   game state machine (no DOM)
 js/stats.js  persistence and aggregation
@@ -85,6 +91,11 @@ ink colours, and `compare_cards.html` shows real cards beside rendered ones.
 They expect the photo, rotated to landscape, as `tools/deck_1998.jpg` (not
 checked in). The numbers are in the comments of `tools/squiggle.py` and
 `js/cards.js`; the traced squiggle outline is `tools/squiggle_trace.json`.
+
+After changing any shipped file, bump `CACHE` in `sw.js` so installed copies
+pick up the new version. Icons are regenerated with `tools/icons.py` and
+rasterized by screenshotting the SVGs in headless Chrome at 512, 192 and 180
+pixels.
 
 Tests run with `node --test tests/`, or without Node by opening
 `tests/run.html` in a browser, for example:
