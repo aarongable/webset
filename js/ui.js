@@ -47,9 +47,10 @@
   let locked = false;
   let guessPick = null;
   let guessFinal = false;
+  let ephemeral = false; // test game: its record is never written to storage
 
   const board = $('#board');
-  const leftEl = $('#left');
+  const leftEl = $('#left'), testFlag = $('#test-flag');
   const noSetBtn = $('#no-set'), pauseBtn = $('#pause-btn'), pauseOverlay = $('#pause-overlay');
   const menuBtn = $('#menu-btn'), menu = $('#menu');
   const guessOverlay = $('#guess-overlay'), overOverlay = $('#over-overlay'), statsOverlay = $('#stats-overlay');
@@ -182,8 +183,16 @@
   }
 
   // ---- game flow --------------------------------------------------------------
-  function newGame() {
-    if (stats.current && !stats.current.finishedAt) {
+  // Attach a stats record for the game in progress. Ephemeral (test) games get
+  // a detached record that is never stored.
+  function attachRecord() {
+    if (ephemeral) stats.current = StatsLib.newGameRecord(Date.now());
+    else stats.startGame(Date.now());
+  }
+
+  function newGame(opts) {
+    opts = opts || {};
+    if (stats.current && !stats.current.finishedAt && !ephemeral) {
       stats.abandonIfEmpty();
       if (stats.current) {
         stats.current.totalMs = Math.round(clock.total());
@@ -191,8 +200,11 @@
         stats.persist();
       }
     }
-    game = new Game({ deckSize, rng });
-    stats.startGame(Date.now());
+    ephemeral = !!opts.endgame;
+    game = opts.endgame ? Game.endgame({ rng }) : null;
+    if (!game) { ephemeral = false; game = new Game({ deckSize, rng }); }
+    attachRecord();
+    testFlag.hidden = !ephemeral;
     locked = false;
     hide(guessOverlay); hide(overOverlay); hide(statsOverlay); closeMenu();
     setPaused(false);
@@ -422,10 +434,11 @@
       ['Last card', lastCardText(g)],
       ['Cards left over', String(s.cardsLeft == null ? '—' : s.cardsLeft)],
     ].filter(Boolean);
-    $('#over-body').innerHTML = '<dl class="kv">' + rows.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('') + '</dl>';
+    $('#over-body').innerHTML = '<dl class="kv">' + rows.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('') + '</dl>' +
+      (ephemeral ? '<p class="muted" style="margin:14px 0 0">Test game. Nothing was recorded.</p>' : '');
     show(overOverlay);
   }
-  $('#over-new').addEventListener('click', newGame);
+  $('#over-new').addEventListener('click', () => newGame());
   $('#over-stats').addEventListener('click', () => { hide(overOverlay); openStats(true); });
 
   // ---- stats view ---------------------------------------------------------------
@@ -539,7 +552,7 @@
   $('#stats-clear').addEventListener('click', () => {
     if (!confirm('Delete all recorded games and set times? This cannot be undone.')) return;
     stats.clearAll();
-    stats.startGame(Date.now());
+    attachRecord();
     renderStats();
   });
 
@@ -582,8 +595,15 @@
   noSetBtn.addEventListener('click', doNoSet);
 
   document.addEventListener('keydown', (e) => {
-    if (e.metaKey || e.ctrlKey || e.altKey) return;
     const k = e.key.toLowerCase();
+    // Testing shortcut: Ctrl+Shift+E jumps to the last 12 cards of a deck in a
+    // game whose stats are not recorded.
+    if (e.ctrlKey && e.shiftKey && !e.metaKey && !e.altKey && k === 'e') {
+      e.preventDefault();
+      newGame({ endgame: true });
+      return;
+    }
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
     if (!pauseOverlay.hidden) {
       if (k === 'p' || k === 'escape' || k === ' ' || k === 'enter') { e.preventDefault(); setPaused(false); }
       return;
@@ -632,5 +652,5 @@
     dealt.forEach((p) => { const el = cardEl(p); el.classList.add('dealt'); board.appendChild(el); });
     fit(); updateStatus(); clock.mark();
   }
-  window.webset = { get game() { return game; }, stats, clock, newGame, fit, dealExtra };
+  window.webset = { get game() { return game; }, stats, clock, newGame, fit, dealExtra, endgame: () => newGame({ endgame: true }) };
 })();

@@ -174,6 +174,34 @@
     }
   }
 
+  // A game that starts at the last 12 cards of the deck. It is built by
+  // shuffling a full deck and repeatedly removing a random valid set until 12
+  // cards remain, so the leftovers are exactly what a real game could reach.
+  // The removed sets are kept on `removedSets` for inspection. The final card
+  // dealt is face-down as usual. Returns null only if construction keeps
+  // getting stuck (a set-free remainder above 12 cards), which is very rare.
+  Game.endgame = function (opts) {
+    opts = opts || {};
+    const rng = opts.rng || defaultRng();
+    for (let attempt = 0; attempt < 200; attempt++) {
+      const remaining = shuffle(Array.from({ length: 81 }, (_, i) => i), rng);
+      const removed = [];
+      while (remaining.length > 12) {
+        const sets = Cards.findSets(remaining);
+        if (!sets.length) break;
+        const [i, j, k] = sets[Math.floor(rng() * sets.length)];
+        removed.push([remaining[i], remaining[j], remaining[k]]);
+        remaining.splice(k, 1); remaining.splice(j, 1); remaining.splice(i, 1);
+      }
+      if (remaining.length !== 12) continue;
+      const g = new Game({ deck: remaining });
+      g.found = removed.length;
+      g.removedSets = removed;
+      return g;
+    }
+    return null;
+  };
+
   const api = { Game, shuffle };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else Object.assign(root, api);

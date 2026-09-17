@@ -228,6 +228,30 @@ test('dealing is fair: about two thirds of games need an extra deal', () => {
   assert.ok(frac > 0.5 && frac < 0.85, `fraction needing a deal was ${frac}`);
 });
 
+test('endgame factory leaves 12 cards reachable by removing valid sets', () => {
+  for (let seed = 1; seed <= 20; seed++) {
+    const g = Game.endgame({ rng: lcg(seed) });
+    assert.ok(g, 'construction succeeded');
+    assert.equal(g.board.length, 12);
+    assert.equal(g.deck.length, 0);
+    assert.equal(g.found, 23);
+    assert.equal(g.removedSets.length, 23);
+    assert.equal(g.board.filter((c) => c.faceDown).length, 1, 'exactly one face-down card');
+    assert.ok(g.board[11].faceDown, 'the last card dealt is face-down');
+    assert.ok(g.lastCard && g.lastCard.id === g.board[11].id);
+    const seen = new Set(g.ids());
+    for (const [a, b, c] of g.removedSets) {
+      assert.ok(Cards.isSet(a, b, c), `removed triple is a set: ${a},${b},${c}`);
+      for (const x of [a, b, c]) { assert.ok(!seen.has(x), 'card appears once'); seen.add(x); }
+    }
+    assert.equal(seen.size, 81, 'board plus removed sets is the whole deck');
+    // consequence: each attribute sums to 0 mod 3 across the 12 leftovers
+    const sums = [0, 0, 0, 0];
+    g.ids().forEach((id) => Cards.attrs(id).forEach((v, i) => { sums[i] += v; }));
+    sums.forEach((v) => assert.equal(v % 3, 0));
+  }
+});
+
 test('stats aggregations', () => {
   assert.equal(Stats.median([5, 1, 3]), 3);
   assert.equal(Stats.median([4, 1, 3, 2]), 2.5);

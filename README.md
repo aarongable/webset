@@ -60,6 +60,11 @@ Debug query parameters: `?cards=15` plays with a shorter deck (a multiple of 3,
 12–81) so the endgame is quick to reach, and `?seed=N` makes the shuffle
 deterministic. `window.webset` exposes the game, stats and clock in the console.
 
+`Ctrl`+`Shift`+`E` starts a test game at the last 12 cards of a deck, with the
+final card face-down and nothing recorded to stats. The state is built by
+shuffling a full deck and removing 23 random valid sets, so the leftovers are
+exactly what a real game could end with.
+
 Tests run with `node --test tests/`, or without Node by opening
 `tests/run.html` in a browser, for example:
 
