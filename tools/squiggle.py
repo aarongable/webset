@@ -13,17 +13,21 @@ exactly point-symmetric (the real symbol is; the photo has a little camera
 skew), scaled to its measured length relative to the oval, and written as a
 closed Catmull-Rom spline of cubic Beziers in a 100x200 box.
 
-Measurements from the same photo (card short side = 1.0):
-  oval      long 0.686  short 0.345  (a 2:1 stadium)
-  diamond   long 0.705  short 0.345  (sharp rhombus)
-  squiggle  long 0.620  short 0.273
-  symbol pitch 0.446, open-symbol stroke 0.025, stripe pitch 0.0194
+Measurements (card short side = 1.0). Two printings were measured; the
+older one (narrower symbols, wider gaps, thinner outline) is what the app
+uses because it matches the 1998 deck:
+
+                 modern deck              older deck (used)
+  oval      long 0.686 short 0.345     long 0.689 short 0.317 pitch 0.440
+  diamond   long 0.705 short 0.345     long 0.720 short 0.335 pitch 0.445
+  squiggle  long 0.620 short 0.273     long 0.666 short 0.300 pitch 0.417
+  stroke 0.025, stripe pitch 0.0194    stroke 0.020, stripe pitch 0.0195, line 0.0078
 """
 import json
 import math
 import sys
 
-LONG_AXIS = 166.0          # measured: the squiggle is 0.90x the oval's length (oval = 184)
+LONG_AXIS = 178.0          # measured: 0.666 of the card's short side (oval = 184 -> 0.689)
 POINTS = 40                # control points kept around the outline
 
 
@@ -32,7 +36,12 @@ def load(path):
 
 
 def rotate_tall(pts):
-    # photo symbol is wide; turn it 90 degrees so it is tall
+    # if the traced symbol is wider than tall (a portrait card with symbols in
+    # a row), turn it 90 degrees so it is tall like on a landscape card
+    xs = [p[0] for p in pts]
+    ys = [p[1] for p in pts]
+    if max(xs) - min(xs) <= max(ys) - min(ys):
+        return pts
     return [(y, -x) for x, y in pts]
 
 

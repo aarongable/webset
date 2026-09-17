@@ -2,8 +2,8 @@
 <style>
 :root{--set-red:#E4232A;--set-green:#17A34A;--set-purple:#7E2EA0}
 body{margin:0;background:#2b6b3a;padding:16px;font:14px sans-serif;color:#fff}
-.row{display:flex;gap:16px;margin-bottom:16px;align-items:flex-start}
-canvas{width:420px;height:270px;display:block;background:#fff;border-radius:12px}
+.row{display:flex;gap:16px;margin-bottom:14px;align-items:flex-start}
+canvas{width:420px;height:270px;display:block;border-radius:12px}
 .card{width:420px}.card svg{width:100%;display:block}
 .card-face{fill:#fff;stroke:#ccc;stroke-width:1.5}
 h3{margin:0 0 6px;font-weight:500}
@@ -13,33 +13,30 @@ h3{margin:0 0 6px;font-weight:500}
 <script src="../js/cards.js"></script>
 <script>
 document.getElementById('defs').innerHTML = Cards.stripeDefsSVG();
-// real cards in the photo (portrait, symbols horizontal): [sx, sy, sw, sh] of the card, and the matching card attrs
 const items = [
-  { name: 'three solid red ovals',       rect: [2290, 2534, 542, 847], attrs: [0, 2, 0, 0] },
-  { name: 'two solid red squiggles',     rect: [ 283,  440, 530, 830], attrs: [0, 1, 2, 0] },
-  { name: 'one solid red diamond',       rect: [ 230, 1480, 520, 810], attrs: [0, 0, 1, 0] },
-  { name: 'three striped purple squiggles', rect: [1620, 420, 530, 830], attrs: [2, 2, 2, 1] },
-  { name: 'two open green ovals',        rect: [2290, 440, 540, 850], attrs: [1, 1, 0, 2] },
-  { name: 'two striped purple ovals',    rect: [2320, 1470, 530, 830], attrs: [2, 1, 0, 1] },
+  { name: 'three solid purple ovals',   rect: [2600, 1560, 1000, 660], attrs: [2, 2, 0, 0] },
+  { name: 'three open purple ovals',    rect: [1540, 1560, 1010, 660], attrs: [2, 2, 0, 2] },
+  { name: 'three solid red squiggles',  rect: [1540,  860, 1010, 640], attrs: [0, 2, 2, 0] },
+  { name: 'three solid purple diamonds',rect: [ 500,  860, 1000, 640], attrs: [2, 2, 1, 0] },
+  { name: 'three striped red squiggles',rect: [2600,  150, 1000, 650], attrs: [0, 2, 2, 1] },
+  { name: 'two striped red diamonds',   rect: [2600, 2267, 1000, 640], attrs: [0, 1, 1, 1] },
+  { name: 'one striped green oval',     rect: [2600,  860, 1000, 640], attrs: [1, 0, 0, 1] },
 ];
 const img = new Image();
 img.onload = () => {
   const rows = document.getElementById('rows');
   for (const it of items) {
     const row = document.createElement('div'); row.className = 'row';
-    const c = document.createElement('canvas'); c.width = 840; c.height = 540;
-    const ctx = c.getContext('2d');
-    // rotate the portrait card 90deg clockwise into landscape
-    ctx.translate(840, 0); ctx.rotate(Math.PI / 2);
+    const c = document.createElement('canvas'); c.width = 1000; c.height = 643;
     const [sx, sy, sw, sh] = it.rect;
-    ctx.drawImage(img, sx, sy, sw, sh, 0, 0, 540, 840);
+    c.getContext('2d').drawImage(img, sx, sy, sw, sh, 0, 0, 1000, 643);
     const card = document.createElement('div'); card.className = 'card';
     card.innerHTML = Cards.renderCardSVG(Cards.fromAttrs(it.attrs));
-    const left = document.createElement('div'); left.innerHTML = '<h3>real: ' + it.name + '</h3>'; left.appendChild(c);
+    const left = document.createElement('div'); left.innerHTML = '<h3>real (older deck): ' + it.name + '</h3>'; left.appendChild(c);
     const right = document.createElement('div'); right.innerHTML = '<h3>rendered</h3>'; right.appendChild(card);
     row.appendChild(left); row.appendChild(right); rows.appendChild(row);
   }
   document.title = 'OK';
 };
-img.src = 'solver_IMG_5254.JPG';
+img.src = 'p_chail.jpg';
 </script>

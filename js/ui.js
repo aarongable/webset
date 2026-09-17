@@ -128,7 +128,6 @@
     }
     w = Math.max(20, Math.floor(w)); h = Math.max(20, Math.floor(h));
     board.style.setProperty('--card-w', w + 'px');
-    board.style.setProperty('--card-h', h + 'px');
     board.style.setProperty('--gap', gap + 'px');
     board.style.setProperty('--card-r', Math.round((portrait ? w : h) * 18 / 225) + 'px');
     updateKeyHints();
@@ -452,6 +451,25 @@
     return sum.n ? `${fmtMs(sum.median)} <small>· ${sum.n}</small>` : '<small>—</small>';
   }
 
+  function pct(x) { return x === null || x === undefined ? '—' : Math.round(x * 100) + '%'; }
+
+  // Two bars on a 0..100% scale: what you chose vs what random picking predicts.
+  function shareRow(label, chosen, expected, n, title) {
+    return `<div class="attr-group" title="${title || ''}"><span class="l">${label}</span><div class="pair">` +
+      `<div class="row">${bar(chosen, 1, 'series-1')}<span class="v">${pct(chosen)} <small>chosen</small></span></div>` +
+      `<div class="row">${bar(expected, 1, 'neutral')}<span class="v">${pct(expected)} <small>expected · ${n}</small></span></div>` +
+      `</div></div>`;
+  }
+
+  // Verdict for a chosen-vs-expected share with n trials: two standard errors.
+  function lean(chosen, expected, n, favLabel, disLabel) {
+    if (!n || chosen === null) return '<span class="tag">no data</span>';
+    const se = Math.sqrt(Math.max(expected * (1 - expected), 0.01) / n);
+    const d = chosen - expected;
+    if (n < 8 || Math.abs(d) < 2 * se) return '<span class="tag">no clear lean</span>';
+    return `<span class="tag ${d > 0 ? 'fav' : 'dis'}">${d > 0 ? favLabel : disLabel}</span>`;
+  }
+
   function renderStats() {
     const sets = stats.allSets();
     const games = stats.finishedGames();
@@ -460,56 +478,66 @@
       body.innerHTML = '<p class="empty">No sets recorded yet. Go find some.</p>';
       return;
     }
+    const withAvail = StatsLib.withAvailability(sets);
+    const choices = withAvail.filter((s) => s.availableKinds.length > 1).length;
     const allTimes = sets.map((s) => s.ms);
-    const finishedSums = games.map(StatsLib.gameSummary).filter((s) => s.setsFound >= 3);
-    const best = finishedSums.length ? Math.min(...finishedSums.map((s) => s.medianMs)) : null;
 
     let html = '<div class="tiles">' +
       `<div class="tile"><span class="v">${games.length}</span><span class="l">games finished</span></div>` +
       `<div class="tile"><span class="v">${sets.length}</span><span class="l">sets found</span></div>` +
       `<div class="tile"><span class="v">${fmtMs(StatsLib.median(allTimes))}</span><span class="l">median time per set</span></div>` +
-      `<div class="tile"><span class="v">${fmtMs(best)}</span><span class="l">best game median</span></div>` +
+      `<div class="tile"><span class="v">${choices}</span><span class="l">finds with a choice of sets</span></div>` +
       '</div>';
 
-    // By attribute: same vs different
-    const byAttr = StatsLib.byAttributeSameVsDiff(sets);
-    const maxAttr = Math.max(...byAttr.flatMap((a) => [a.same.median || 0, a.diff.median || 0]));
-    html += '<div class="section"><h3>Which kinds of sets slow you down</h3>' +
-      '<p class="hint">Median time to find a set, split by whether each attribute is the same or different across the three cards.</p>' +
-      '<div class="legend"><span><i style="background:var(--series-1)"></i>Same</span><span><i style="background:var(--series-2)"></i>Different</span></div>' +
+    // 1. Preference by attribute
+    const byAttr = StatsLib.biasByAttribute(sets);
+    html += '<div class="section"><h3>What you reach for</h3>' +
+      '<p class="hint">Only finds where both a “same” and a “different” set were on the table count. “Chosen” is how often you took the set where that attribute was the same. “Expected” is how often you would have if you picked among the available sets at random.</p>' +
+      '<div class="legend"><span><i style="background:var(--series-1)"></i>Chosen</span><span><i style="background:var(--neutral)"></i>Expected at random</span></div>' +
       byAttr.map((a) =>
-        `<div class="attr-group"><span class="l">${a.label}</span><div class="pair">` +
-        `<div class="row" title="${a.label} same: median ${fmtMs(a.same.median)}, ${a.same.n} sets">${bar(a.same.median, maxAttr, 'series-1')}<span class="v">${val(a.same)}</span></div>` +
-        `<div class="row" title="${a.label} different: median ${fmtMs(a.diff.median)}, ${a.diff.n} sets">${bar(a.diff.median, maxAttr, 'series-2')}<span class="v">${val(a.diff)}</span></div>` +
-        `</div></div>`
+        shareRow(`Same ${a.label.toLowerCase()} ${lean(a.chosenSame, a.expectedSame, a.n, 'you favour these', 'you overlook these')}`, a.chosenSame, a.expectedSame, a.n,
+          `${a.label} same: chosen ${pct(a.chosenSame)}, expected ${pct(a.expectedSame)}, over ${a.n} finds with both options`)
       ).join('') + '</div>';
 
-    // By number of differing attributes
-    const byN = StatsLib.byNumDiffering(sets);
-    const maxN = Math.max(...byN.map((b) => b.median || 0));
+    // 2. By number of differing attributes
+    const byN = StatsLib.biasByNumDiffering(sets);
     html += '<div class="section"><h3>By how many attributes differ</h3>' +
-      '<p class="hint">One differing attribute means three otherwise identical cards; four means everything differs.</p><div class="hbars">' +
+      '<p class="hint">Share of your finds by how many attributes vary within the set, against the share on offer. One differing attribute means three otherwise identical cards; four means everything differs.</p>' +
       byN.map((b) =>
-        `<div class="hbar" title="${b.differing} differing: median ${fmtMs(b.median)}, ${b.n} sets"><span class="l">${b.differing} differ${b.differing === 1 ? 's' : ''}</span>${bar(b.median, maxN, 'series-1')}<span class="v">${val(b)}</span></div>`
-      ).join('') + '</div></div>';
+        shareRow(`${b.differing} differ${b.differing === 1 ? 's' : ''} ${lean(b.chosen, b.expected, b.n, 'you favour these', 'you overlook these')}`, b.chosen, b.expected, b.n,
+          `${b.differing} differing: chosen ${pct(b.chosen)}, expected ${pct(b.expected)}, over ${b.n} finds`)
+      ).join('') + '</div>';
 
-    // Full kinds table
-    const kinds = StatsLib.byKind(sets).slice().sort((a, b) => (b.median || -1) - (a.median || -1));
-    html += '<div class="section"><h3>All fifteen kinds</h3><p class="hint">Slowest first. Kinds seen fewer than three times are greyed out.</p><div class="table-wrap"><table class="table">' +
-      '<thead><tr><th>Kind</th><th class="num">Differ</th><th class="num">Sets</th><th class="num">Median</th><th class="num">Fastest</th></tr></thead><tbody>' +
+    // 3. Speed when there was no choice
+    const solo = StatsLib.soloSets(sets);
+    const soloAttr = StatsLib.byAttributeSameVsDiff(solo);
+    const maxSolo = Math.max(1, ...soloAttr.flatMap((a) => [a.same.median || 0, a.diff.median || 0]));
+    html += '<div class="section"><h3>Speed when there was only one set</h3>' +
+      `<p class="hint">Median time to find a set when it was the only one on the table (${solo.length} of ${sets.length} finds), so the time reflects the set itself rather than which one you chose.</p>` +
+      '<div class="legend"><span><i style="background:var(--series-1)"></i>Same</span><span><i style="background:var(--series-2)"></i>Different</span></div>' +
+      soloAttr.map((a) =>
+        `<div class="attr-group"><span class="l">${a.label}</span><div class="pair">` +
+        `<div class="row">${bar(a.same.median, maxSolo, 'series-1')}<span class="v">${val(a.same)}</span></div>` +
+        `<div class="row">${bar(a.diff.median, maxSolo, 'series-2')}<span class="v">${val(a.diff)}</span></div>` +
+        `</div></div>`
+      ).join('');
+    const soloN = StatsLib.byNumDiffering(solo);
+    const maxSoloN = Math.max(1, ...soloN.map((b) => b.median || 0));
+    html += '<div class="hbars" style="margin-top:12px">' + soloN.map((b) =>
+      `<div class="hbar"><span class="l">${b.differing} differ${b.differing === 1 ? 's' : ''}</span>${bar(b.median, maxSoloN, 'series-1')}<span class="v">${val(b)}</span></div>`
+    ).join('') + '</div></div>';
+
+    // 4. All fifteen kinds
+    const kinds = StatsLib.biasByKind(sets).slice().sort((a, b) => (b.ratio === null ? -1 : b.ratio) - (a.ratio === null ? -1 : a.ratio));
+    html += '<div class="section"><h3>All fifteen kinds</h3>' +
+      '<p class="hint">“Expected” is how many times random picking would have chosen this kind given how often it was on the table. A ratio above 1 means you gravitate to it; below 1 you tend to pass it over. Kinds expected fewer than three times are greyed out.</p>' +
+      '<div class="table-wrap"><table class="table">' +
+      '<thead><tr><th>Kind</th><th class="num">Differ</th><th class="num">On table</th><th class="num">Chosen</th><th class="num">Expected</th><th class="num">Ratio</th></tr></thead><tbody>' +
       kinds.map((k) =>
-        `<tr class="${k.n < 3 ? 'dim' : ''}"><td>${k.label}</td><td class="num">${k.numDiffering}</td><td class="num">${k.n}</td><td class="num">${fmtMs(k.median)}</td><td class="num">${fmtMs(k.min)}</td></tr>`
+        `<tr class="${k.expected < 3 ? 'dim' : ''}"><td>${k.label}</td><td class="num">${k.numDiffering}</td><td class="num">${k.timesAvailable}</td><td class="num">${k.chosen}</td><td class="num">${k.expected.toFixed(1)}</td><td class="num">${k.ratio === null ? '—' : k.ratio.toFixed(2)}</td></tr>`
       ).join('') + '</tbody></table></div></div>';
 
-    // Sets available
-    const avail = StatsLib.bySetsAvailable(sets);
-    const maxA = Math.max(...avail.map((b) => b.median || 0));
-    html += '<div class="section"><h3>By how many sets were on the table</h3><div class="hbars">' +
-      avail.map((b) =>
-        `<div class="hbar" title="${b.label} sets available: median ${fmtMs(b.median)}, ${b.n} sets"><span class="l">${b.label} available</span>${bar(b.median, maxA, 'series-1')}<span class="v">${val(b)}</span></div>`
-      ).join('') + '</div></div>';
-
-    // Game history
+    // 5. Game history
     html += '<div class="section"><h3>Games</h3>';
     if (!games.length) {
       html += '<p class="hint">No finished games yet. Play a deck to the end to see it here.</p>';
@@ -517,7 +545,7 @@
       const sums = games.map(StatsLib.gameSummary);
       if (sums.length >= 2) html += sparkline(sums.map((s) => s.medianMs || 0));
       html += '<div class="table-wrap"><table class="table"><thead><tr><th>When</th><th class="num">Sets</th><th class="num">Time</th><th class="num">Median</th><th class="num">Wrong</th><th class="num">False calls</th><th>Last card</th></tr></thead><tbody>' +
-        sums.slice().reverse().slice(0, 40).map((s, i, arr) => {
+        sums.slice().reverse().slice(0, 40).map((s, i) => {
           const g = games[games.length - 1 - i];
           return `<tr><td>${fmtDate(s.finishedAt)}</td><td class="num">${s.setsFound}</td><td class="num">${fmtMs(s.totalMs)}</td><td class="num">${fmtMs(s.medianMs)}</td><td class="num">${s.wrongGuesses}</td><td class="num">${s.falseNoSetCalls}</td><td>${lastCardText(g)}</td></tr>`;
         }).join('') + '</tbody></table></div>';

@@ -24,6 +24,7 @@
   --icon-neutral: #8a8984;
   --series-1: #2a78d6;
   --series-2: #eb6834;
+  --neutral: #b9b5aa;
   --scrim: rgba(20, 20, 18, 0.45);
 
   --card-w: 120px;
@@ -47,6 +48,7 @@
     --icon-neutral: #9a998f;
     --series-1: #3987e5;
     --series-2: #d95926;
+    --neutral: #5a5b62;
     --scrim: rgba(0, 0, 0, 0.6);
   }
 }
@@ -161,12 +163,16 @@ kbd {
   -webkit-user-select: none;
   -webkit-touch-callout: none;
 }
+/* The card's height is always derived from its width, so the 3.5 x 2.25
+   proportion of the physical card holds at any viewport size. */
 .board[data-mode="landscape"] {
+  --card-h: calc(var(--card-w) * 225 / 350);
   grid-template-rows: repeat(3, var(--card-h));
   grid-auto-flow: column;
   grid-auto-columns: var(--card-w);
 }
 .board[data-mode="portrait"] {
+  --card-h: calc(var(--card-w) * 350 / 225);
   grid-template-columns: repeat(3, var(--card-w));
   grid-auto-flow: row;
   grid-auto-rows: var(--card-h);
@@ -176,7 +182,11 @@ kbd {
   position: relative;
   width: var(--card-w);
   height: var(--card-h);
+  flex: none;
+  appearance: none;
+  -webkit-appearance: none;
   padding: 0;
+  margin: 0;
   border: 0;
   background: transparent;
   border-radius: var(--card-r);
@@ -407,9 +417,12 @@ body.paused #app { filter: blur(14px); }
 .hbar .v small { color: var(--muted); }
 .hbar.pair { grid-template-rows: auto auto; }
 .hbar.pair .l { grid-row: 1 / span 2; }
-.attr-group { display: grid; grid-template-columns: 6.5em 1fr; gap: 10px; align-items: center; padding: 6px 0; border-top: 1px solid var(--line); }
+.attr-group { display: grid; grid-template-columns: 8.5em 1fr; gap: 10px; align-items: center; padding: 6px 0; border-top: 1px solid var(--line); }
 .attr-group:first-of-type { border-top: 0; }
-.attr-group .l { color: var(--fg); font-size: 14px; font-weight: 500; }
+.attr-group .l { color: var(--fg); font-size: 14px; font-weight: 500; line-height: 1.35; }
+.tag { display: inline-block; font-size: 11px; font-weight: 500; color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 1px 7px; margin-top: 3px; white-space: nowrap; }
+.tag.fav { color: var(--series-1); border-color: var(--series-1); }
+.tag.dis { color: var(--series-2); border-color: var(--series-2); }
 .attr-group .pair { display: grid; gap: 5px; }
 .attr-group .row { display: grid; grid-template-columns: 1fr 7em; gap: 10px; align-items: center; }
 .attr-group .row .track { height: 10px; }

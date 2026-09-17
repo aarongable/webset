@@ -64,6 +64,78 @@
     return Object.keys(b).map((k) => ({ label: k, ...summary(b[k]) }));
   }
 
+  // ---- bias analytics ------------------------------------------------------
+  // These compare what you chose with what was on the table. Each set record
+  // carries availableKinds: the kind signature of every set that existed at
+  // that moment (including the one found). Records without it are skipped.
+
+  function withAvailability(sets) {
+    return sets.filter((s) => Array.isArray(s.availableKinds) && s.availableKinds.length > 0);
+  }
+
+  // For each attribute: among finds where both a "same" and a "different" set
+  // were available, how often did you pick "same", versus the share of "same"
+  // among the options (what random picking would give)?
+  function biasByAttribute(sets) {
+    return Cards.ATTRS.map((attr, i) => {
+      const bit = 1 << i;
+      let n = 0, chosenSame = 0, expectedSame = 0;
+      for (const s of withAvailability(sets)) {
+        const same = s.availableKinds.filter((k) => !(k & bit)).length;
+        const diff = s.availableKinds.length - same;
+        if (!same || !diff) continue;
+        n++;
+        expectedSame += same / s.availableKinds.length;
+        if (!(s.kind & bit)) chosenSame++;
+      }
+      return { attr, label: Cards.ATTR_LABELS[attr], n, chosenSame: n ? chosenSame / n : null, expectedSame: n ? expectedSame / n : null };
+    });
+  }
+
+  // Share chosen vs share available for 1..4 differing attributes, over finds
+  // where more than one distinct count was available.
+  function biasByNumDiffering(sets) {
+    const chosen = [0, 0, 0, 0, 0], expected = [0, 0, 0, 0, 0];
+    let n = 0;
+    for (const s of withAvailability(sets)) {
+      const counts = [0, 0, 0, 0, 0];
+      for (const k of s.availableKinds) counts[Cards.numDiffering(k)]++;
+      if (counts.filter((c) => c > 0).length < 2) continue;
+      n++;
+      for (let d = 1; d <= 4; d++) expected[d] += counts[d] / s.availableKinds.length;
+      chosen[Cards.numDiffering(s.kind)]++;
+    }
+    return [1, 2, 3, 4].map((d) => ({ differing: d, n, chosen: n ? chosen[d] / n : null, expected: n ? expected[d] / n : null }));
+  }
+
+  // Per kind: how many times chosen vs how many times expected under random
+  // picking (sum of availability shares), over finds where alternatives existed.
+  function biasByKind(sets) {
+    const chosen = new Map(), expected = new Map(), seen = new Map();
+    for (const s of withAvailability(sets)) {
+      const L = s.availableKinds.length;
+      const distinct = new Set(s.availableKinds);
+      for (const k of distinct) {
+        const c = s.availableKinds.filter((x) => x === k).length;
+        expected.set(k, (expected.get(k) || 0) + c / L);
+        seen.set(k, (seen.get(k) || 0) + 1);
+      }
+      chosen.set(s.kind, (chosen.get(s.kind) || 0) + 1);
+    }
+    const out = [];
+    for (let sig = 1; sig < 16; sig++) {
+      const e = expected.get(sig) || 0, c = chosen.get(sig) || 0;
+      out.push({ kind: sig, label: Cards.kindLabel(sig), numDiffering: Cards.numDiffering(sig), timesAvailable: seen.get(sig) || 0, chosen: c, expected: e, ratio: e > 0 ? c / e : null });
+    }
+    return out;
+  }
+
+  // Finds where exactly one set was on the table: a speed measure that is not
+  // confounded by choice.
+  function soloSets(sets) {
+    return sets.filter((s) => s.setsAvailable === 1);
+  }
+
   function gameSummary(game) {
     const times = game.sets.map((s) => s.ms);
     const s = summary(times);
@@ -177,6 +249,7 @@
   const api = {
     KEY, mean, median, summary,
     byAttributeSameVsDiff, byNumDiffering, byKind, bySetsAvailable, gameSummary, allSets,
+    withAvailability, biasByAttribute, biasByNumDiffering, biasByKind, soloSets,
     load, save, clear, newGameRecord, Stats,
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;

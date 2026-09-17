@@ -37,11 +37,23 @@ the way you would lay them out on a table in front of you.
 
 ## Stats
 
-Everything is stored in `localStorage` under `webset.v1`. The stats view shows
-median time to find a set split by whether each attribute was the same or
-different across the three cards, by how many attributes differ, all fifteen
-kinds, how many sets were available, and a history of finished games. Sets from
-abandoned games still count toward the kind analytics.
+Everything is stored in `localStorage` under `webset.v1`. The stats view is
+built to expose biases in which sets you find. Every time you find a set, the
+app records the kind of every set that was on the table at that moment, so it
+can compare what you chose with what was available:
+
+- **What you reach for**: for each attribute, how often you took the set where
+  that attribute was the same, against how often random picking among the
+  available sets would have. Only finds where both kinds were on offer count.
+- **By how many attributes differ**: the same comparison for sets with one,
+  two, three or four differing attributes.
+- **Speed when there was only one set**: median time by kind, restricted to
+  finds where no other set existed, so the time is about the set and not
+  about your choice.
+- **All fifteen kinds**: times chosen against times expected, as a ratio.
+- A history of finished games.
+
+Sets from abandoned games still count toward the kind analytics.
 
 ## Development
 
@@ -66,9 +78,12 @@ shuffling a full deck and removing 23 random valid sets, so the leftovers are
 exactly what a real game could end with.
 
 Card geometry (symbol sizes, spacing, stroke, stripes, and the squiggle
-outline) was measured from a photograph of real cards with the pages in
-`tools/`. They expect the photo as `solver_IMG_5254.JPG` next to them; see the
-comments in `tools/squiggle.py` for the numbers.
+outline) was measured from photographs of real cards with the pages in
+`tools/`. Two printings were measured; the app follows the older one, which
+has narrower symbols, wider gaps and a thinner outline, matching the 1998
+deck. The numbers are in the comments of `tools/squiggle.py` and `js/cards.js`.
+The pages expect the photos next to them (`solver_IMG_5254.JPG`, `p_chail.jpg`);
+the traced squiggle outline is checked in as `tools/squiggle_trace.json`.
 
 Tests run with `node --test tests/`, or without Node by opening
 `tests/run.html` in a browser, for example:

@@ -95,12 +95,15 @@
         return { type: 'notset', positions };
       }
       const usedFaceDown = positions.some((p) => this.board[p].faceDown);
+      const ids = this.ids();
+      const availableKinds = Cards.findSets(ids).map(([i, j, k]) => Cards.kind(ids[i], ids[j], ids[k]));
       const record = {
         cards: [a, b, c],
         kind: Cards.kind(a, b, c),
         boardSize: this.board.length,
         deckRemaining: this.deck.length,
-        setsAvailable: this.setsOnBoard().length,
+        setsAvailable: availableKinds.length,
+        availableKinds,
         wrongGuesses: this.intervalWrong,
         falseNoSetCalls: this.intervalFalseNoSet,
         usedFaceDown,

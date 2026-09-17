@@ -252,6 +252,47 @@ test('endgame factory leaves 12 cards reachable by removing valid sets', () => {
   }
 });
 
+test('set records carry the kinds of every available set', () => {
+  const g = new Game({ rng: lcg(2) });
+  g.board[0].id = Cards.fromAttrs([0,0,0,0]);
+  g.board[1].id = Cards.fromAttrs([1,1,1,1]);
+  g.board[2].id = Cards.fromAttrs([2,2,2,2]);
+  const before = g.setsOnBoard().length;
+  g.toggle(0); g.toggle(1);
+  const r = g.toggle(2);
+  assert.equal(r.type, 'set');
+  assert.equal(r.record.availableKinds.length, before);
+  assert.equal(r.record.setsAvailable, before);
+  assert.ok(r.record.availableKinds.includes(0b1111));
+});
+
+test('bias analytics compare chosen kinds with available kinds', () => {
+  // Three finds. Kinds: 1 = only color differs, 15 = all different.
+  const sets = [
+    { ms: 1000, kind: 15, setsAvailable: 2, availableKinds: [15, 1] },   // picked all-different over shared-everything-else
+    { ms: 1000, kind: 15, setsAvailable: 3, availableKinds: [15, 1, 1] },
+    { ms: 1000, kind: 1,  setsAvailable: 1, availableKinds: [1] },       // solo: no choice, excluded from bias
+    { ms: 1000, kind: 3,  setsAvailable: 2 },                             // old record without availability: skipped
+  ];
+  const byAttr = Stats.biasByAttribute(sets);
+  const shape = byAttr.find((a) => a.attr === 'shape');   // bit 2: same in kind 1, differs in kind 15
+  assert.equal(shape.n, 2);
+  assert.equal(shape.chosenSame, 0);                      // never picked the shape-same set
+  assert.ok(Math.abs(shape.expectedSame - (0.5 + 2/3) / 2) < 1e-9);
+  const color = byAttr.find((a) => a.attr === 'color');   // color differs in both kinds: no contrast, n = 0
+  assert.equal(color.n, 0);
+  const byN = Stats.biasByNumDiffering(sets);
+  assert.equal(byN[0].n, 2);
+  assert.equal(byN[3].chosen, 1);                         // 4-differing chosen every time
+  assert.ok(Math.abs(byN[3].expected - (0.5 + 1/3) / 2) < 1e-9);
+  const byKind = Stats.biasByKind(sets);
+  const k15 = byKind.find((k) => k.kind === 15), k1 = byKind.find((k) => k.kind === 1);
+  assert.equal(k15.chosen, 2); assert.equal(k1.chosen, 1);
+  assert.ok(Math.abs(k15.expected - (0.5 + 1/3)) < 1e-9);
+  assert.ok(Math.abs(k1.expected - (0.5 + 2/3 + 1)) < 1e-9);
+  assert.equal(Stats.soloSets(sets).length, 1);
+});
+
 test('stats aggregations', () => {
   assert.equal(Stats.median([5, 1, 3]), 3);
   assert.equal(Stats.median([4, 1, 3, 2]), 2.5);
