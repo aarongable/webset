@@ -1,58 +1,80 @@
 #!/usr/bin/env python3
-"""Generate the SVG path for the squiggle symbol used in js/cards.js.
+"""Turn a traced squiggle outline into the SVG path used in js/cards.js.
 
-The symbol lives in a 100x200 box. The outline is a constant-ish width tube
-around a sine centerline with semicircular caps, smoothed with Catmull-Rom
-splines converted to cubic Beziers. Run and paste the output into
-SHAPE_PATHS.squiggle.
+The outline comes from tools/trace_squiggle.html, which crops the single red
+squiggle out of a photograph of real cards, thresholds the red pixels and
+walks the boundary. Run it in a browser (or headless Chrome with --dump-dom)
+and save the JSON it prints as trace.json, then:
+
+    python3 tools/squiggle.py trace.json
+
+The shape is rotated to the tall orientation used on a landscape card, made
+exactly point-symmetric (the real symbol is; the photo has a little camera
+skew), scaled so its long axis matches the oval's, and written as a closed
+Catmull-Rom spline of cubic Beziers in a 100x200 box.
 """
+import json
 import math
+import sys
 
-N = 36
-TOP, BOT = 33, 167       # centerline y extent
-AMP = 13                 # wave amplitude
-W0 = 24                  # half width
-PHASE = -0.35
+LONG_AXIS = 184.0          # same as the oval (y from 8 to 192)
+POINTS = 40                # control points kept around the outline
 
 
-def center(t):
-    return 50 + AMP * math.sin(2 * math.pi * t + PHASE) + (0.5 - t) * 6, TOP + (BOT - TOP) * t
+def load(path):
+    return [tuple(p) for p in json.load(open(path))['pts']]
 
 
-def width(t):
-    return W0 + 3 * abs(math.sin(2 * math.pi * t + PHASE))
+def rotate_tall(pts):
+    # photo symbol is wide; turn it 90 degrees so it is tall
+    return [(y, -x) for x, y in pts]
 
 
-def frame(t):
-    x, y = center(t)
-    x2, y2 = center(min(t + 1e-3, 1))
-    x1, y1 = center(max(t - 1e-3, 0))
-    dx, dy = x2 - x1, y2 - y1
-    L = math.hypot(dx, dy)
-    tx, ty = dx / L, dy / L
-    return (x, y), (tx, ty), (-ty, tx)
-
-
-def sides():
-    left, right = [], []
-    for i in range(N + 1):
-        t = i / N
-        (x, y), _, (nx, ny) = frame(t)
-        w = width(t)
-        left.append((x + nx * w, y + ny * w))
-        right.append((x - nx * w, y - ny * w))
-    return left, right
-
-
-def cap(t, arrive_sign, tdir):
-    (x, y), (tx, ty), (nx, ny) = frame(t)
-    w = width(t)
+def symmetrize(pts):
+    n = len(pts)
+    cx = sum(p[0] for p in pts) / n
+    cy = sum(p[1] for p in pts) / n
+    # find the index offset that best pairs each point with its antipode
+    best, best_err = 0, float('inf')
+    for off in range(n):
+        err = 0.0
+        for i in range(n):
+            j = (i + off) % n
+            err += (pts[i][0] + pts[j][0] - 2 * cx) ** 2 + (pts[i][1] + pts[j][1] - 2 * cy) ** 2
+        if err < best_err:
+            best, best_err = off, err
     out = []
-    for k in range(1, 6):
-        a = math.pi * k / 6
-        ox = arrive_sign * math.cos(a) * nx + math.sin(a) * tx * tdir
-        oy = arrive_sign * math.cos(a) * ny + math.sin(a) * ty * tdir
-        out.append((x + ox * w, y + oy * w))
+    for i in range(n):
+        j = (i + best) % n
+        mx, my = 2 * cx - pts[j][0], 2 * cy - pts[j][1]
+        out.append(((pts[i][0] + mx) / 2, (pts[i][1] + my) / 2))
+    return out
+
+
+def fit_box(pts):
+    xs = [p[0] for p in pts]
+    ys = [p[1] for p in pts]
+    w, h = max(xs) - min(xs), max(ys) - min(ys)
+    s = LONG_AXIS / h
+    cx, cy = (max(xs) + min(xs)) / 2, (max(ys) + min(ys)) / 2
+    return [((x - cx) * s + 50, (y - cy) * s + 100) for x, y in pts]
+
+
+def resample(pts, m):
+    # closed polyline, equal arc-length spacing
+    n = len(pts)
+    cum = [0.0]
+    for i in range(1, n + 1):
+        a, b = pts[i - 1], pts[i % n]
+        cum.append(cum[-1] + math.hypot(b[0] - a[0], b[1] - a[1]))
+    L = cum[-1]
+    out = []
+    for k in range(m):
+        t = k / m * L
+        i = next(i for i in range(1, n + 1) if cum[i] >= t)
+        f = (t - cum[i - 1]) / ((cum[i] - cum[i - 1]) or 1)
+        a, b = pts[i - 1], pts[i % n]
+        out.append((a[0] + f * (b[0] - a[0]), a[1] + f * (b[1] - a[1])))
     return out
 
 
@@ -68,6 +90,7 @@ def catmull_rom(pts):
 
 
 if __name__ == '__main__':
-    left, right = sides()
-    poly = right[::4] + cap(1.0, -1, +1) + left[::-1][::4] + cap(0.0, +1, -1)
-    print(catmull_rom(poly))
+    pts = load(sys.argv[1] if len(sys.argv) > 1 else 'trace.json')
+    pts = fit_box(symmetrize(rotate_tall(pts)))
+    pts = resample(pts, POINTS)
+    print(catmull_rom(pts))

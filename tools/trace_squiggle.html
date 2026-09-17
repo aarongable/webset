@@ -1,0 +1,73 @@
+<!doctype html><meta charset="utf-8">
+<style>body{margin:0;background:#222;color:#eee;font:12px monospace}#wrap{position:relative;display:inline-block}#wrap svg{position:absolute;left:0;top:0}pre{white-space:pre-wrap}</style>
+<div id="wrap"><canvas id="c"></canvas><svg id="ov"></svg></div>
+<pre id="out"></pre>
+<script>
+const q = new URLSearchParams(location.search);
+const [sx, sy, sw, sh] = (q.get('r') || '960,1720,470,300').split(',').map(Number);
+const SCALE = 2;
+const img = new Image();
+img.onload = () => {
+  const c = document.getElementById('c');
+  c.width = sw * SCALE; c.height = sh * SCALE;
+  const ctx = c.getContext('2d');
+  ctx.drawImage(img, sx, sy, sw, sh, 0, 0, c.width, c.height);
+  const W = c.width, H = c.height;
+  const d = ctx.getImageData(0, 0, W, H).data;
+  let mask = new Uint8Array(W * H);
+  for (let i = 0; i < W * H; i++) {
+    const r = d[i*4], g = d[i*4+1], b = d[i*4+2];
+    mask[i] = (r > 140 && g < 130 && b < 130 && r - g > 60) ? 1 : 0;
+  }
+  // majority filter x2 to kill speckle
+  for (let pass = 0; pass < 2; pass++) {
+    const m2 = new Uint8Array(W * H);
+    for (let y = 1; y < H-1; y++) for (let x = 1; x < W-1; x++) {
+      let s = 0; for (let dy=-1; dy<=1; dy++) for (let dx=-1; dx<=1; dx++) s += mask[(y+dy)*W + x+dx];
+      m2[y*W+x] = s >= 5 ? 1 : 0;
+    }
+    mask = m2;
+  }
+  // largest component via flood fill
+  const lab = new Int32Array(W*H).fill(-1); let best = -1, bestN = 0, ncomp = 0;
+  for (let i = 0; i < W*H; i++) if (mask[i] && lab[i] < 0) {
+    const stack = [i]; lab[i] = ncomp; let n = 0;
+    while (stack.length) { const p = stack.pop(); n++; const x = p % W, y = (p - x) / W;
+      for (const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]) { const nx=x+dx, ny=y+dy; if (nx<0||ny<0||nx>=W||ny>=H) continue; const j = ny*W+nx; if (mask[j] && lab[j] < 0) { lab[j] = ncomp; stack.push(j); } } }
+    if (n > bestN) { bestN = n; best = ncomp; } ncomp++;
+  }
+  for (let i = 0; i < W*H; i++) mask[i] = lab[i] === best ? 1 : 0;
+  const at = (x, y) => (x>=0&&y>=0&&x<W&&y<H) ? mask[y*W+x] : 0;
+  // Moore neighbor tracing
+  let start = -1; for (let i = 0; i < W*H; i++) if (mask[i]) { start = i; break; }
+  const s0 = [start % W, Math.floor(start / W)];
+  const N8 = [[-1,-1],[0,-1],[1,-1],[1,0],[1,1],[0,1],[-1,1],[-1,0]]; // clockwise from top-left
+  const contour = [];
+  let p = s0.slice(), b = [s0[0]-1, s0[1]];
+  for (let guard = 0; guard < 200000; guard++) {
+    contour.push(p.slice());
+    // index of b relative to p
+    let k = N8.findIndex(([dx,dy]) => p[0]+dx===b[0] && p[1]+dy===b[1]);
+    let found = null;
+    for (let t = 1; t <= 8; t++) { const idx = (k + t) % 8; const q2 = [p[0]+N8[idx][0], p[1]+N8[idx][1]]; if (at(q2[0], q2[1])) { found = q2; b = [p[0]+N8[(idx+7)%8][0], p[1]+N8[(idx+7)%8][1]]; break; } }
+    if (!found) break;
+    p = found;
+    if (p[0]===s0[0] && p[1]===s0[1] && contour.length > 10) break;
+  }
+  // resample by arc length
+  let L = 0; const cum = [0];
+  for (let i = 1; i < contour.length; i++) { L += Math.hypot(contour[i][0]-contour[i-1][0], contour[i][1]-contour[i-1][1]); cum.push(L); }
+  const M = +q.get('n') || 48; const pts = [];
+  for (let k = 0; k < M; k++) { const t = k / M * L; let i = cum.findIndex((c) => c >= t); if (i < 1) i = 1; const f = (t - cum[i-1]) / (cum[i]-cum[i-1] || 1); pts.push([contour[i-1][0] + f*(contour[i][0]-contour[i-1][0]), contour[i-1][1] + f*(contour[i][1]-contour[i-1][1])]); }
+  // light smoothing (moving average)
+  const sm = pts.map((_, i) => { let x=0,y=0; for (let d=-2; d<=2; d++) { const p2 = pts[(i+d+M)%M]; x+=p2[0]; y+=p2[1]; } return [x/5, y/5]; });
+  const xs = sm.map(p=>p[0]), ys = sm.map(p=>p[1]);
+  const bbox = [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)];
+  // overlay
+  const ov = document.getElementById('ov'); ov.setAttribute('width', W); ov.setAttribute('height', H);
+  ov.innerHTML = `<polygon points="${sm.map(p=>p.map(v=>v.toFixed(1)).join(',')).join(' ')}" fill="none" stroke="#0af" stroke-width="2"/>`;
+  document.getElementById('out').textContent = JSON.stringify({ W, H, pixels: bestN, contourLen: contour.length, bbox, pts: sm.map(p => p.map(v => +v.toFixed(2))) });
+  document.title = 'TRACED';
+};
+img.src = 'solver_IMG_5254.JPG';
+</script>

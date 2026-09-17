@@ -53,7 +53,7 @@ js/game.js   game state machine (no DOM)
 js/stats.js  persistence and aggregation
 js/ui.js     DOM, input, timing, overlays
 tests/       logic tests (node:test style)
-tools/       generator for the squiggle path
+tools/       squiggle tracer (photo -> outline) and path converter
 ```
 
 Debug query parameters: `?cards=15` plays with a shorter deck (a multiple of 3,
