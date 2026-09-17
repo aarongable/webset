@@ -10,14 +10,20 @@ and save the JSON it prints as trace.json, then:
 
 The shape is rotated to the tall orientation used on a landscape card, made
 exactly point-symmetric (the real symbol is; the photo has a little camera
-skew), scaled so its long axis matches the oval's, and written as a closed
-Catmull-Rom spline of cubic Beziers in a 100x200 box.
+skew), scaled to its measured length relative to the oval, and written as a
+closed Catmull-Rom spline of cubic Beziers in a 100x200 box.
+
+Measurements from the same photo (card short side = 1.0):
+  oval      long 0.686  short 0.345  (a 2:1 stadium)
+  diamond   long 0.705  short 0.345  (sharp rhombus)
+  squiggle  long 0.620  short 0.273
+  symbol pitch 0.446, open-symbol stroke 0.025, stripe pitch 0.0194
 """
 import json
 import math
 import sys
 
-LONG_AXIS = 184.0          # same as the oval (y from 8 to 192)
+LONG_AXIS = 166.0          # measured: the squiggle is 0.90x the oval's length (oval = 184)
 POINTS = 40                # control points kept around the outline
 
 
@@ -91,6 +97,8 @@ def catmull_rom(pts):
 
 if __name__ == '__main__':
     pts = load(sys.argv[1] if len(sys.argv) > 1 else 'trace.json')
+    if len(sys.argv) > 2:
+        LONG_AXIS = float(sys.argv[2])
     pts = fit_box(symmetrize(rotate_tall(pts)))
     pts = resample(pts, POINTS)
     print(catmull_rom(pts))

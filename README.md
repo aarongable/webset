@@ -53,7 +53,7 @@ js/game.js   game state machine (no DOM)
 js/stats.js  persistence and aggregation
 js/ui.js     DOM, input, timing, overlays
 tests/       logic tests (node:test style)
-tools/       squiggle tracer (photo -> outline) and path converter
+tools/       photo tracer, measurement and comparison pages, squiggle converter
 ```
 
 Debug query parameters: `?cards=15` plays with a shorter deck (a multiple of 3,
@@ -64,6 +64,11 @@ deterministic. `window.webset` exposes the game, stats and clock in the console.
 final card face-down and nothing recorded to stats. The state is built by
 shuffling a full deck and removing 23 random valid sets, so the leftovers are
 exactly what a real game could end with.
+
+Card geometry (symbol sizes, spacing, stroke, stripes, and the squiggle
+outline) was measured from a photograph of real cards with the pages in
+`tools/`. They expect the photo as `solver_IMG_5254.JPG` next to them; see the
+comments in `tools/squiggle.py` for the numbers.
 
 Tests run with `node --test tests/`, or without Node by opening
 `tests/run.html` in a browser, for example:

@@ -1,0 +1,32 @@
+<!doctype html><meta charset="utf-8"><style>body{margin:0;background:#222}</style>
+<canvas id="c" width="640" height="1000"></canvas>
+<pre id="out" style="color:#eee;font:12px monospace;white-space:pre-wrap"></pre>
+<script>
+const img = new Image();
+img.onload = () => {
+  const c = document.getElementById('c'), ctx = c.getContext('2d');
+  const sx = 2220, sy = 2440;
+  ctx.drawImage(img, sx, sy, 640, 1000, 0, 0, 640, 1000);
+  const d = ctx.getImageData(0, 0, 640, 1000).data, W = 640, H = 1000;
+  const isWhite = (i) => d[i*4] > 190 && d[i*4+1] > 185 && d[i*4+2] > 180;
+  const isRed = (i) => d[i*4] > 140 && d[i*4+1] < 130 && d[i*4+2] < 130;
+  // card bbox: columns/rows where > 60% of pixels are white or red (card face)
+  const face = (i) => isWhite(i) || isRed(i);
+  const colFrac = [], rowFrac = [];
+  for (let x = 0; x < W; x++) { let n = 0; for (let y = 0; y < H; y++) if (face(y*W+x)) n++; colFrac.push(n / H); }
+  for (let y = 0; y < H; y++) { let n = 0; for (let x = 0; x < W; x++) if (face(y*W+x)) n++; rowFrac.push(n / W); }
+  const first = (a, t) => a.findIndex((v) => v > t), last = (a, t) => a.length - 1 - a.slice().reverse().findIndex((v) => v > t);
+  const cx0 = first(colFrac, .5), cx1 = last(colFrac, .5), cy0 = first(rowFrac, .5), cy1 = last(rowFrac, .5);
+  // red extents per row -> find the three ovals
+  const redRows = new Array(H).fill(null);
+  for (let y = cy0 + 12; y < cy1 - 12; y++) { let n = 0, xmin = W, xmax = -1; for (let x = cx0 + 12; x < cx1 - 12; x++) if (isRed(y*W+x)) { n++; xmin = Math.min(xmin, x); xmax = Math.max(xmax, x); } redRows[y] = n > 20 ? [xmin, xmax] : null; }
+  const ovals = []; let cur = null;
+  redRows.forEach((r, y) => { if (r && !cur) cur = { y0: y, xmin: r[0], xmax: r[1] }; if (r && cur) { cur.y1 = y; cur.xmin = Math.min(cur.xmin, r[0]); cur.xmax = Math.max(cur.xmax, r[1]); } if (!r && cur) { ovals.push(cur); cur = null; } });
+  const out = { card: { x0: cx0, x1: cx1, w: cx1 - cx0, y0: cy0, y1: cy1, h: cy1 - cy0, aspect: (cy1 - cy0) / (cx1 - cx0) }, ovals: ovals.map((o) => ({ w: o.xmax - o.xmin, h: o.y1 - o.y0, cx: (o.xmin + o.xmax) / 2, cy: (o.y0 + o.y1) / 2 })) };
+  // pitch
+  if (out.ovals.length >= 2) out.pitch = out.ovals[1].cy - out.ovals[0].cy;
+  document.getElementById('out').textContent = JSON.stringify(out);
+  document.title = 'OK';
+};
+img.src = 'solver_IMG_5254.JPG';
+</script>

@@ -56,8 +56,8 @@
   const guessOverlay = $('#guess-overlay'), overOverlay = $('#over-overlay'), statsOverlay = $('#stats-overlay');
 
   $('#svg-defs').innerHTML = Cards.stripeDefsSVG() +
-    '<pattern id="stripes-neutral" patternUnits="userSpaceOnUse" width="100" height="10" style="color:var(--icon-neutral)">' +
-    '<line x1="0" y1="5" x2="100" y2="5" stroke="currentColor" stroke-width="2.6"/></pattern>';
+    `<pattern id="stripes-neutral" patternUnits="userSpaceOnUse" width="100" height="${Cards.STRIPE_PITCH}" style="color:var(--icon-neutral)">` +
+    `<line x1="0" y1="${Cards.STRIPE_PITCH / 2}" x2="100" y2="${Cards.STRIPE_PITCH / 2}" stroke="currentColor" stroke-width="${Cards.STRIPE_WIDTH}"/></pattern>`;
 
   // ---- helpers -------------------------------------------------------------
   function fmtMs(ms) {
