@@ -6,7 +6,7 @@
   const $ = (sel, el) => (el || document).querySelector(sel);
   const ASPECT = Cards.CARD_W / Cards.CARD_H;
   const KEY_ROWS = ['qwertyu', 'asdfghj', 'zxcvbnm'];
-  const FOUND_MS = 420, FLIP_MS = 500, WRONG_MS = 350;
+  const FOUND_MS = 160, FLIP_MS = 500, WRONG_MS = 450;
 
   // ---- clock ---------------------------------------------------------------
   // Tracks active time for the whole game and for the current "lap" (time since
@@ -49,8 +49,8 @@
   let guessFinal = false;
 
   const board = $('#board');
-  const foundEl = $('#found'), leftEl = $('#left');
-  const noSetBtn = $('#no-set');
+  const leftEl = $('#left');
+  const noSetBtn = $('#no-set'), pauseBtn = $('#pause-btn'), pauseOverlay = $('#pause-overlay');
   const menuBtn = $('#menu-btn'), menu = $('#menu');
   const guessOverlay = $('#guess-overlay'), overOverlay = $('#over-overlay'), statsOverlay = $('#stats-overlay');
 
@@ -73,7 +73,7 @@
   }
   function show(el) { el.hidden = false; const b = el.querySelector('.btn.primary, .btn'); if (b) b.focus({ preventScroll: true }); }
   function hide(el) { el.hidden = true; }
-  function anyOverlayOpen() { return !guessOverlay.hidden || !overOverlay.hidden || !statsOverlay.hidden; }
+  function anyOverlayOpen() { return !guessOverlay.hidden || !overOverlay.hidden || !statsOverlay.hidden || !pauseOverlay.hidden; }
   function setKbd(on) { document.body.classList.toggle('kbd', on); }
 
   // ---- board rendering -------------------------------------------------------
@@ -143,9 +143,9 @@
   }
 
   function updateStatus() {
-    foundEl.textContent = game.found;
     leftEl.textContent = game.deck.length;
     noSetBtn.disabled = game.over;
+    pauseBtn.disabled = game.over;
   }
 
   // Rebuild the board after cards were removed, sliding survivors into place.
@@ -195,6 +195,7 @@
     stats.startGame(Date.now());
     locked = false;
     hide(guessOverlay); hide(overOverlay); hide(statsOverlay); closeMenu();
+    setPaused(false);
     clock.pauses.clear();
     if (document.hidden) clock.pauses.add('hidden');
     renderBoard();
@@ -255,7 +256,7 @@
       locked = false;
       clock.resume('anim');
       clock.mark();
-      if (game.boardEmpty()) endGame();
+      if (game.exhausted()) endGame();
     }, delay + FOUND_MS);
   }
 
@@ -281,7 +282,25 @@
     fit();
     updateStatus();
     clock.mark();
+    if (game.exhausted()) endGame();
   }
+
+  // ---- pause -------------------------------------------------------------------
+  function setPaused(on) {
+    if (on) {
+      if (!game || game.over || anyOverlayOpen()) return;
+      clock.pause('paused');
+      document.body.classList.add('paused');
+      pauseOverlay.hidden = false;
+    } else {
+      if (pauseOverlay.hidden) return;
+      pauseOverlay.hidden = true;
+      document.body.classList.remove('paused');
+      clock.resume('paused');
+    }
+  }
+  pauseBtn.addEventListener('click', () => setPaused(true));
+  pauseOverlay.addEventListener('pointerdown', (e) => { e.preventDefault(); setPaused(false); });
 
   function endGame() {
     game.finish();
@@ -565,6 +584,10 @@
   document.addEventListener('keydown', (e) => {
     if (e.metaKey || e.ctrlKey || e.altKey) return;
     const k = e.key.toLowerCase();
+    if (!pauseOverlay.hidden) {
+      if (k === 'p' || k === 'escape' || k === ' ' || k === 'enter') { e.preventDefault(); setPaused(false); }
+      return;
+    }
     if (anyOverlayOpen()) {
       if (k === 'escape') {
         if (!statsOverlay.hidden) closeStats();
@@ -577,6 +600,7 @@
     if (k === ' ' || k === 'n') { e.preventDefault(); doNoSet(); return; }
     if (k === 'escape') { game.clearSelection(); syncSelection(); return; }
     if (k === 's') { openStats(false); return; }
+    if (k === 'p') { setPaused(true); return; }
     if (k === 'g') { openGuess(false); return; }
     for (let r = 0; r < 3; r++) {
       const c = KEY_ROWS[r].indexOf(k);
@@ -590,7 +614,8 @@
   });
 
   document.addEventListener('visibilitychange', () => {
-    if (document.hidden) clock.pause('hidden'); else clock.resume('hidden');
+    if (document.hidden) { clock.pause('hidden'); setPaused(true); }
+    else clock.resume('hidden');
   });
   window.addEventListener('resize', fit);
   if (window.ResizeObserver) new ResizeObserver(fit).observe(board);

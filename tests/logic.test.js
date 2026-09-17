@@ -186,15 +186,46 @@ test('reveal scores partial guesses', () => {
   assert.equal(r2.correct, null);
 });
 
-test('game over only on a correct no-set declaration with an empty deck', () => {
+test('game is exhausted when the deck is empty and no set remains', () => {
   const g = new Game({ rng: lcg(7), deckSize: 12 });
-  // exhaust the board of sets by hand: replace with a cap set
+  assert.equal(g.exhausted(), false); // 12 random cards almost surely have a set... check honestly
   const cap = CAP12.slice();
   g.board.forEach((c, i) => { c.id = cap[i]; });
+  assert.equal(g.exhausted(), true);
   const r = g.noSet();
   assert.deepEqual(r, { ok: true, gameOver: true });
   assert.equal(g.over, true);
   assert.equal(g.toggle(0), null);
+  // not exhausted while cards remain in the deck, even with no set on the table
+  const g2 = new Game({ rng: lcg(8) });
+  g2.board.forEach((c, i) => { c.id = cap[i]; });
+  g2.deck = g2.deck.filter((id) => !cap.includes(id));
+  assert.equal(g2.exhausted(), false);
+});
+
+test('dealing is fair: about two thirds of games need an extra deal', () => {
+  // Plays full games with the real rules. With a fair shuffle roughly 67% of
+  // games hit a 12-card board with no set at least once (simulated: 67%).
+  const N = 300;
+  let needed = 0;
+  for (let i = 0; i < N; i++) {
+    const g = new Game({ rng: lcg(1000 + i) });
+    let any = false, guard = 0;
+    while (!g.over && guard++ < 200) {
+      const sets = g.setsOnBoard();
+      if (!sets.length) {
+        const r = g.noSet();
+        if (r.gameOver) break;
+        any = true;
+        continue;
+      }
+      sets[0].forEach((p) => g.toggle(p));
+      if (g.exhausted()) break;
+    }
+    if (any) needed++;
+  }
+  const frac = needed / N;
+  assert.ok(frac > 0.5 && frac < 0.85, `fraction needing a deal was ${frac}`);
 });
 
 test('stats aggregations', () => {

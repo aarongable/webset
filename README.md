@@ -22,14 +22,15 @@ No build step, no dependencies. Everything is plain HTML, CSS and JavaScript.
 - The very last card of the deck is dealt face-down. Tap **guess** on it to
   predict its color, number, shape and fill, or reveal it. It can also be used
   in a set while still face-down.
-- The game ends when you declare **No Set** with the deck empty, exactly like
-  the physical game.
+- The game ends on its own once the deck is empty and no set remains, and a
+  summary of the game appears.
 - Timing is recorded but never shown during play. Open the stats view from the
-  `⋯` menu (or press `S`).
+  `⋯` menu (or press `S`). The pause button blurs the table and stops the
+  clock; the clock also pauses whenever the tab is hidden.
 
 Keyboard: `Q`–`U`, `A`–`J`, `Z`–`M` select cards by position (rows top to
-bottom), `Space` or `N` for No Set, `Esc` clears the selection, `G` opens the
-last-card guess.
+bottom), `Space` or `N` for No Set, `P` pauses, `Esc` clears the selection,
+`G` opens the last-card guess.
 
 On phones the table is shown three cards wide with each card turned sideways,
 the way you would lay them out on a table in front of you.

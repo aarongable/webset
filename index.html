@@ -16,9 +16,12 @@
 <main id="app">
   <header class="bar" id="bar">
     <div class="status" id="status" aria-live="polite">
-      <span><b id="found">0</b> sets</span><span class="dot">·</span><span><b id="left">69</b> left</span>
+      <span><b id="left">69</b> cards left</span>
     </div>
     <div class="actions">
+      <button id="pause-btn" class="btn icon" type="button" aria-label="Pause" title="Pause (P)">
+        <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><rect x="3" y="2" width="3.5" height="12" rx="1" fill="currentColor"/><rect x="9.5" y="2" width="3.5" height="12" rx="1" fill="currentColor"/></svg>
+      </button>
       <button id="no-set" class="btn primary" type="button">No Set</button>
       <div class="menu-wrap">
         <button id="menu-btn" class="btn icon" type="button" aria-label="Menu" aria-haspopup="true" aria-expanded="false">&#8943;</button>
@@ -27,7 +30,7 @@
           <button class="menu-item" role="menuitem" type="button" data-action="new">New game</button>
           <div class="menu-help">
             <div><kbd>Q</kbd>–<kbd>U</kbd> <kbd>A</kbd>–<kbd>J</kbd> <kbd>Z</kbd>–<kbd>M</kbd> select cards</div>
-            <div><kbd>Space</kbd> No Set &nbsp; <kbd>Esc</kbd> clear &nbsp; <kbd>S</kbd> stats</div>
+            <div><kbd>Space</kbd> No Set &nbsp; <kbd>P</kbd> pause &nbsp; <kbd>Esc</kbd> clear &nbsp; <kbd>S</kbd> stats</div>
           </div>
         </div>
       </div>
@@ -35,6 +38,14 @@
   </header>
   <section id="board" class="board" aria-label="Cards on the table"></section>
 </main>
+
+<!-- Pause -->
+<div id="pause-overlay" class="pause-overlay" hidden role="dialog" aria-modal="true" aria-label="Paused">
+  <div class="pause-card">
+    <div class="pause-title">Paused</div>
+    <div class="pause-hint">Tap anywhere to resume</div>
+  </div>
+</div>
 
 <!-- Last card guess panel -->
 <div id="guess-overlay" class="overlay" hidden>

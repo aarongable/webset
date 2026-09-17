@@ -146,8 +146,8 @@
       return { ok: true, dealt };
     }
 
-    // True when nothing is left to do and the game should end without a declaration.
-    boardEmpty() { return this.board.length === 0 && this.deck.length === 0; }
+    // True when the deck is empty and no set remains: the game is over.
+    exhausted() { return this.deck.length === 0 && this.setsOnBoard().length === 0; }
 
     finish() { this.over = true; }
 

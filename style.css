@@ -19,6 +19,7 @@
   --back-inner: rgba(255, 255, 255, 0.35);
   --accent: #2a78d6;
   --wrong: #d03b3b;
+  --wrong-tint: #fbe3e3;
   --good: #0ca30c;
   --icon-neutral: #8a8984;
   --series-1: #2a78d6;
@@ -205,13 +206,11 @@ kbd {
   z-index: 1;
 }
 .card.wrong {
-  animation: shake .35s ease;
-  box-shadow: 0 0 0 3px var(--wrong);
+  animation: wrong-shake .45s ease;
+  box-shadow: 0 0 0 4px var(--wrong);
 }
-.card.found {
-  box-shadow: 0 0 0 3px var(--good);
-  animation: found .42s ease forwards;
-}
+.card.wrong .card-face { fill: var(--wrong-tint); }
+.card.found { animation: found .16s ease-in forwards; }
 .card.dealt { animation: deal .35s ease-out; }
 .card.flip { animation: flip .5s ease; }
 
@@ -250,10 +249,18 @@ body.kbd .card .key { display: block; }
   60% { translate: -4px 0; }
   80% { translate: 4px 0; }
 }
+@keyframes wrong-shake {
+  0%, 100% { translate: 0 0; rotate: 0deg; }
+  15% { translate: -12px 0; rotate: -1.5deg; }
+  30% { translate: 12px 0; rotate: 1.5deg; }
+  45% { translate: -10px 0; rotate: -1deg; }
+  60% { translate: 10px 0; rotate: 1deg; }
+  75% { translate: -6px 0; }
+  90% { translate: 6px 0; }
+}
 @keyframes found {
-  0% { opacity: 1; transform: scale(1); }
-  40% { opacity: 1; transform: scale(1.05); }
-  100% { opacity: 0; transform: scale(1.02); }
+  from { opacity: 1; transform: scale(1); }
+  to { opacity: 0; transform: scale(.94); }
 }
 @keyframes deal {
   from { opacity: 0; transform: scale(.92); }
@@ -269,6 +276,7 @@ body.kbd .card .key { display: block; }
   .card, .btn { transition: none; }
   .card.wrong, .btn.shake, .card.dealt, .card.flip { animation: none; }
   .card.found { animation: found .01s forwards; }
+  .card.wrong { animation: none; }
 }
 
 /* ---- phone layout ------------------------------------------------------- */
@@ -281,6 +289,26 @@ body.kbd .card .key { display: block; }
   }
   .menu { top: auto; bottom: calc(100% + 6px); }
 }
+
+/* ---- pause ---------------------------------------------------------------- */
+
+body.paused #app { filter: blur(14px); }
+.pause-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9;
+  display: grid;
+  place-items: center;
+  background: color-mix(in srgb, var(--bg) 55%, transparent);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.pause-card { text-align: center; }
+.pause-title { font-size: 28px; font-weight: 600; letter-spacing: .01em; }
+.pause-hint { color: var(--muted); margin-top: 6px; }
 
 /* ---- overlays ----------------------------------------------------------- */
 
