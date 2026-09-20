@@ -345,7 +345,9 @@ body[data-layout="landscape-phone"][data-side="left"] .menu { right: auto; left:
 
 /* ---- pause ---------------------------------------------------------------- */
 
-body.paused #app { filter: blur(14px); }
+/* The table is blurred behind the pause screen and behind the Stats and
+   About dialogs. */
+body.paused #app, body.blurred #app { filter: blur(14px); }
 .pause-overlay {
   position: fixed;
   inset: 0;

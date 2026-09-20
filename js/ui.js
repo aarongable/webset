@@ -76,6 +76,7 @@
   function hide(el) { el.hidden = true; }
   function anyOverlayOpen() { return !guessOverlay.hidden || !overOverlay.hidden || !statsOverlay.hidden || !pauseOverlay.hidden || !aboutOverlay.hidden; }
   function setKbd(on) { document.body.classList.toggle('kbd', on); }
+  function setBlurred(on) { document.body.classList.toggle('blurred', on); }
 
   // ---- board rendering -------------------------------------------------------
   function cardEl(pos) {
@@ -232,6 +233,7 @@
     testFlag.hidden = !ephemeral;
     locked = false;
     hide(guessOverlay); hide(overOverlay); hide(statsOverlay); hide(aboutOverlay); closeMenu();
+    setBlurred(false);
     setPaused(false);
     clock.pauses.clear();
     if (document.hidden) clock.pauses.add('hidden');
@@ -598,11 +600,13 @@
     statsReturnToSummary = !!fromSummary;
     renderStats();
     clock.pause('overlay');
+    setBlurred(true);
     show(statsOverlay);
     statsOverlay.scrollTop = 0;
   }
   function closeStats() {
     hide(statsOverlay);
+    setBlurred(false);
     clock.resume('overlay');
     if (statsReturnToSummary) { statsReturnToSummary = false; show(overOverlay); }
   }
@@ -625,9 +629,10 @@
   function openAbout() {
     $('#about-version').textContent = versionText();
     clock.pause('overlay');
+    setBlurred(true);
     show(aboutOverlay);
   }
-  function closeAbout() { hide(aboutOverlay); clock.resume('overlay'); }
+  function closeAbout() { hide(aboutOverlay); setBlurred(false); clock.resume('overlay'); }
   $('#about-close').addEventListener('click', closeAbout);
 
   // ---- menu ----------------------------------------------------------------------
