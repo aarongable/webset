@@ -33,6 +33,7 @@
   --card-h: 77px;
   --card-r: 6px;
   --gap: 10px;
+  --bar-size: 64px; /* thickness of the control bar on phones, both orientations */
 }
 
 @media (prefers-color-scheme: dark) {
@@ -291,16 +292,52 @@ body.kbd .card .key { display: block; }
   .card.wrong { animation: none; }
 }
 
-/* ---- phone layout ------------------------------------------------------- */
+/* ---- phone layouts ------------------------------------------------------ */
+/* body[data-layout] is set by fit(): "portrait" (bar along the bottom),
+   "landscape-phone" (bar along the side that was the bottom, so the cards keep
+   the same physical footprint when the phone is turned) or "landscape"
+   (desktop: bar along the top). */
 
-@media (orientation: portrait) {
-  .bar {
-    order: 2;
-    padding-top: 10px;
-    padding-bottom: calc(10px + env(safe-area-inset-bottom));
-  }
-  .menu { top: auto; bottom: calc(100% + 6px); }
+body[data-layout="portrait"] .bar {
+  order: 2;
+  box-sizing: content-box;
+  height: calc(var(--bar-size) - 20px);
+  padding: 10px 16px;
+  padding-bottom: calc(10px + env(safe-area-inset-bottom));
 }
+body[data-layout="portrait"] .menu { top: auto; bottom: calc(100% + 6px); }
+
+body[data-layout="landscape-phone"] #app { flex-direction: row; }
+body[data-layout="landscape-phone"] .bar {
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  box-sizing: content-box;
+  width: calc(var(--bar-size) - 16px);
+  padding: 12px 8px;
+  padding-top: calc(12px + env(safe-area-inset-top));
+  padding-bottom: calc(12px + env(safe-area-inset-bottom));
+}
+body[data-layout="landscape-phone"][data-side="right"] .bar { order: 2; padding-right: calc(8px + env(safe-area-inset-right)); }
+body[data-layout="landscape-phone"][data-side="left"] .bar { order: 0; padding-left: calc(8px + env(safe-area-inset-left)); }
+body[data-layout="landscape-phone"][data-side="right"] .board { padding-left: calc(12px + env(safe-area-inset-left)); }
+body[data-layout="landscape-phone"][data-side="left"] .board { padding-right: calc(12px + env(safe-area-inset-right)); }
+/* Text in the side bar is rotated to run along the strip, reading downwards
+   when the strip is on the right and upwards when it is on the left. */
+body[data-layout="landscape-phone"] .status,
+body[data-layout="landscape-phone"] .btn.primary {
+  writing-mode: vertical-rl;
+}
+body[data-layout="landscape-phone"][data-side="left"] .status,
+body[data-layout="landscape-phone"][data-side="left"] .btn.primary {
+  transform: rotate(180deg);
+}
+body[data-layout="landscape-phone"] .status { line-height: 1; }
+body[data-layout="landscape-phone"] .actions { flex-direction: column-reverse; gap: 10px; }
+body[data-layout="landscape-phone"] .btn.primary { padding: 1.1em .5em; }
+body[data-layout="landscape-phone"] .menu { top: auto; bottom: 0; }
+body[data-layout="landscape-phone"][data-side="right"] .menu { right: calc(100% + 6px); }
+body[data-layout="landscape-phone"][data-side="left"] .menu { right: auto; left: calc(100% + 6px); }
 
 /* ---- pause ---------------------------------------------------------------- */
 
@@ -351,9 +388,9 @@ body.paused #app { filter: blur(14px); }
 .page-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
 .page-foot { margin-top: 24px; display: flex; justify-content: flex-end; }
 
-@media (orientation: portrait) and (max-width: 600px) {
-  .overlay:not(.scroll) { align-items: flex-end; padding: 0; }
-  .overlay:not(.scroll) .sheet {
+@media (max-width: 600px) {
+  body[data-layout="portrait"] .overlay:not(.scroll) { align-items: flex-end; padding: 0; }
+  body[data-layout="portrait"] .overlay:not(.scroll) .sheet {
     width: 100%;
     border-radius: 16px 16px 0 0;
     padding-bottom: calc(20px + env(safe-area-inset-bottom));

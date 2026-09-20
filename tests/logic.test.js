@@ -186,7 +186,7 @@ test('reveal scores partial guesses', () => {
   assert.equal(r2.correct, null);
 });
 
-test('game is exhausted when the deck is empty and no set remains', () => {
+test('exhausted() reports an empty deck with no set; the game itself ends only on noSet()', () => {
   const g = new Game({ rng: lcg(7), deckSize: 12 });
   assert.equal(g.exhausted(), false); // 12 random cards almost surely have a set... check honestly
   const cap = CAP12.slice();

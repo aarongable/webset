@@ -106,11 +106,33 @@
     Array.from(board.children).forEach((el, i) => { el.dataset.pos = i; });
   }
 
+  // Which physical edge of the device is the portrait "bottom" once the phone
+  // is turned to landscape. screen.orientation.angle is the counter-clockwise
+  // rotation from the natural (portrait) orientation: 90 puts that edge on the
+  // right, 270 on the left.
+  function landscapeSide() {
+    const forced = params.get('side');
+    if (forced === 'left' || forced === 'right') return forced; // debug override
+    let angle = window.screen && window.screen.orientation ? window.screen.orientation.angle : window.orientation;
+    if (typeof angle !== 'number') return 'right';
+    angle = ((angle % 360) + 360) % 360;
+    return angle === 270 ? 'left' : 'right';
+  }
+
+  function applyLayout() {
+    const portrait = window.innerWidth < window.innerHeight;
+    const phone = Math.min(window.innerWidth, window.innerHeight) < 600;
+    const layout = portrait ? 'portrait' : phone ? 'landscape-phone' : 'landscape';
+    document.body.dataset.layout = layout;
+    document.body.dataset.side = layout === 'landscape-phone' ? landscapeSide() : '';
+    board.dataset.mode = portrait ? 'portrait' : 'landscape';
+    return portrait;
+  }
+
   function fit() {
     if (!game) return;
     const n = game.board.length;
-    const portrait = window.innerWidth < window.innerHeight;
-    board.dataset.mode = portrait ? 'portrait' : 'landscape';
+    const portrait = applyLayout();
     const rect = board.getBoundingClientRect();
     const pad = 12;
     const gap = Math.max(6, Math.round(Math.min(rect.width, rect.height) * 0.02));
@@ -267,7 +289,6 @@
       locked = false;
       clock.resume('anim');
       clock.mark();
-      if (game.exhausted()) endGame();
     }, delay + FOUND_MS);
   }
 
@@ -293,7 +314,6 @@
     fit();
     updateStatus();
     clock.mark();
-    if (game.exhausted()) endGame();
   }
 
   // ---- pause -------------------------------------------------------------------
@@ -661,11 +681,21 @@
     }
   });
 
+  // Pause the instant the game loses focus (switching apps or windows, the
+  // app switcher, a phone call) so the blurred screen is what gets snapshotted,
+  // not something the player sees appear after coming back.
+  function onFocusLost() {
+    if (!game || game.over || anyOverlayOpen()) return;
+    setPaused(true);
+  }
+  window.addEventListener('blur', onFocusLost);
+  window.addEventListener('pagehide', onFocusLost);
   document.addEventListener('visibilitychange', () => {
-    if (document.hidden) { clock.pause('hidden'); setPaused(true); }
+    if (document.hidden) { onFocusLost(); clock.pause('hidden'); }
     else clock.resume('hidden');
   });
   window.addEventListener('resize', fit);
+  if (window.screen && window.screen.orientation) window.screen.orientation.addEventListener('change', fit);
   if (window.ResizeObserver) new ResizeObserver(fit).observe(board);
 
   // ---- go -------------------------------------------------------------------------
