@@ -439,6 +439,12 @@ body.paused #app { filter: blur(14px); }
 .mark.no { color: var(--wrong); }
 .guess-result { margin-top: 14px; font-weight: 500; }
 
+/* ---- about ----------------------------------------------------------------- */
+
+.sheet.about p { margin: 0 0 10px; font-size: 14px; line-height: 1.5; }
+.sheet.about a { color: var(--accent); }
+.sheet.about .version { color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; }
+
 /* ---- summary & stats ----------------------------------------------------- */
 
 .kv { display: grid; grid-template-columns: 1fr auto; gap: 6px 16px; margin: 0; }

@@ -53,7 +53,7 @@
   const leftEl = $('#left'), testFlag = $('#test-flag');
   const noSetBtn = $('#no-set'), pauseBtn = $('#pause-btn'), pauseOverlay = $('#pause-overlay');
   const menuBtn = $('#menu-btn'), menu = $('#menu');
-  const guessOverlay = $('#guess-overlay'), overOverlay = $('#over-overlay'), statsOverlay = $('#stats-overlay');
+  const guessOverlay = $('#guess-overlay'), overOverlay = $('#over-overlay'), statsOverlay = $('#stats-overlay'), aboutOverlay = $('#about-overlay');
 
   $('#svg-defs').innerHTML = Cards.stripeDefsSVG() +
     `<pattern id="stripes-neutral" patternUnits="userSpaceOnUse" width="100" height="${Cards.STRIPE_PITCH}" style="color:var(--icon-neutral)">` +
@@ -74,7 +74,7 @@
   }
   function show(el) { el.hidden = false; const b = el.querySelector('.btn.primary, .btn'); if (b) b.focus({ preventScroll: true }); }
   function hide(el) { el.hidden = true; }
-  function anyOverlayOpen() { return !guessOverlay.hidden || !overOverlay.hidden || !statsOverlay.hidden || !pauseOverlay.hidden; }
+  function anyOverlayOpen() { return !guessOverlay.hidden || !overOverlay.hidden || !statsOverlay.hidden || !pauseOverlay.hidden || !aboutOverlay.hidden; }
   function setKbd(on) { document.body.classList.toggle('kbd', on); }
 
   // ---- board rendering -------------------------------------------------------
@@ -231,7 +231,7 @@
     attachRecord();
     testFlag.hidden = !ephemeral;
     locked = false;
-    hide(guessOverlay); hide(overOverlay); hide(statsOverlay); closeMenu();
+    hide(guessOverlay); hide(overOverlay); hide(statsOverlay); hide(aboutOverlay); closeMenu();
     setPaused(false);
     clock.pauses.clear();
     if (document.hidden) clock.pauses.add('hidden');
@@ -614,6 +614,22 @@
     renderStats();
   });
 
+  // ---- about --------------------------------------------------------------------------
+  function versionText() {
+    const v = window.WEBSET_VERSION || {};
+    if (!v.sha || v.sha === 'dev') return 'Development build';
+    const d = v.date ? new Date(v.date) : null;
+    const when = d && !isNaN(d) ? d.toLocaleString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : v.date;
+    return `Version ${v.sha}` + (when ? ` · ${when}` : '');
+  }
+  function openAbout() {
+    $('#about-version').textContent = versionText();
+    clock.pause('overlay');
+    show(aboutOverlay);
+  }
+  function closeAbout() { hide(aboutOverlay); clock.resume('overlay'); }
+  $('#about-close').addEventListener('click', closeAbout);
+
   // ---- menu ----------------------------------------------------------------------
   function openMenu() { menu.hidden = false; menuBtn.setAttribute('aria-expanded', 'true'); }
   function closeMenu() { menu.hidden = true; menuBtn.setAttribute('aria-expanded', 'false'); }
@@ -624,6 +640,7 @@
     closeMenu();
     if (item.dataset.action === 'stats') openStats(false);
     if (item.dataset.action === 'new') newGame();
+    if (item.dataset.action === 'about') openAbout();
   });
   document.addEventListener('pointerdown', (e) => {
     if (!menu.hidden && !e.target.closest('.menu-wrap')) closeMenu();
@@ -671,6 +688,7 @@
     if (anyOverlayOpen()) {
       if (k === 'escape') {
         if (!statsOverlay.hidden) closeStats();
+        else if (!aboutOverlay.hidden) closeAbout();
         else if (!guessOverlay.hidden && !guessClose.hidden) closeGuess();
       }
       return;

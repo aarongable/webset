@@ -35,6 +35,7 @@
         <div id="menu" class="menu" role="menu" hidden>
           <button class="menu-item" role="menuitem" type="button" data-action="stats">Stats</button>
           <button class="menu-item" role="menuitem" type="button" data-action="new">New game</button>
+          <button class="menu-item" role="menuitem" type="button" data-action="about">About</button>
           <div class="menu-help">
             <div><kbd>Q</kbd>–<kbd>U</kbd> <kbd>A</kbd>–<kbd>J</kbd> <kbd>Z</kbd>–<kbd>M</kbd> select cards</div>
             <div><kbd>Space</kbd> No Set &nbsp; <kbd>P</kbd> pause &nbsp; <kbd>Esc</kbd> clear &nbsp; <kbd>S</kbd> stats</div>
@@ -81,6 +82,20 @@
   </div>
 </div>
 
+<!-- About -->
+<div id="about-overlay" class="overlay" hidden>
+  <div class="sheet about" role="dialog" aria-modal="true" aria-labelledby="about-title">
+    <h2 id="about-title">About</h2>
+    <p>SET® is a registered trademark of Cannon Associates. The SET game and its card designs are © 1988, 1991 Cannon Associates, designed by Marsha J. Falco and published by Set Enterprises, Inc.</p>
+    <p>This web version was made by Aaron Gable as a practice tool. It is not affiliated with or endorsed by the makers of SET and is for personal use only.</p>
+    <p>Source: <a href="https://github.com/aarongable/webset" target="_blank" rel="noopener">github.com/aarongable/webset</a></p>
+    <p class="version" id="about-version"></p>
+    <div class="sheet-actions">
+      <button class="btn primary" type="button" id="about-close">Close</button>
+    </div>
+  </div>
+</div>
+
 <!-- Stats -->
 <div id="stats-overlay" class="overlay scroll" hidden>
   <div class="page" role="dialog" aria-modal="true" aria-labelledby="stats-title">
@@ -95,6 +110,7 @@
   </div>
 </div>
 
+<script src="js/version.js"></script>
 <script src="js/cards.js"></script>
 <script src="js/game.js"></script>
 <script src="js/stats.js"></script>
