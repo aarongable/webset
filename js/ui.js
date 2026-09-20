@@ -360,8 +360,11 @@
     return Cards.renderSymbolIconSVG(spec);
   }
 
+  let guessOpenedAt = 0;
+
   function openGuess(final) {
     if (game.faceDownPos() < 0) return;
+    guessOpenedAt = performance.now();
     guessFinal = final;
     guessPick = { color: null, number: null, shape: null, fill: null };
     $('#guess-intro').textContent = final
@@ -386,6 +389,9 @@
   guessRows.addEventListener('click', (e) => {
     const btn = e.target.closest('.choice');
     if (!btn || btn.disabled) return;
+    // Ignore taps that arrive within a beat of the dialog opening; they are
+    // the tail end of the touch that opened it.
+    if (performance.now() - guessOpenedAt < 350) return;
     const row = btn.closest('.guess-row'), attr = row.dataset.attr, v = +btn.dataset.v;
     const on = btn.getAttribute('aria-pressed') !== 'true';
     row.querySelectorAll('.choice').forEach((b) => b.setAttribute('aria-pressed', 'false'));
@@ -626,19 +632,21 @@
   // ---- input ----------------------------------------------------------------------
   board.addEventListener('pointerdown', (e) => {
     if (e.pointerType === 'mouse' && e.button !== 0) return;
-    const chip = e.target.closest('[data-chip]');
-    if (chip) { e.preventDefault(); e.stopPropagation(); if (!locked && !anyOverlayOpen()) openGuess(false); return; }
+    // The guess chip opens its dialog on the completed click below, not here:
+    // opening on pointerdown let the same touch land as a click on a choice
+    // tile that had just appeared under the finger.
+    if (e.target.closest('[data-chip]')) { e.preventDefault(); e.stopPropagation(); return; }
     const card = e.target.closest('.card');
     if (!card) return;
     e.preventDefault();
     if (e.pointerType !== 'mouse') setKbd(false);
     tap(+card.dataset.pos);
   });
-  // Keyboard activation of a focused card (pointer clicks are handled above).
   board.addEventListener('click', (e) => {
-    if (e.detail !== 0) return;
     const chip = e.target.closest('[data-chip]');
-    if (chip) { openGuess(false); return; }
+    if (chip) { e.stopPropagation(); if (!locked && !anyOverlayOpen()) openGuess(false); return; }
+    // Keyboard activation of a focused card (pointer input is handled above).
+    if (e.detail !== 0) return;
     const card = e.target.closest('.card');
     if (card) tap(+card.dataset.pos);
   });
