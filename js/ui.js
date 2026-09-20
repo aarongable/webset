@@ -221,6 +221,10 @@
         stats.persist();
       }
     }
+    // A new version of the app has taken over since this page loaded: the
+    // start of a game is the one moment a reload costs nothing, so do it now.
+    if (updateReady) { location.reload(); return; }
+    checkForUpdate();
     ephemeral = !!opts.endgame;
     game = opts.endgame ? Game.endgame({ rng }) : null;
     if (!game) { ephemeral = false; game = new Game({ deckSize, rng }); }
@@ -698,17 +702,37 @@
   if (window.screen && window.screen.orientation) window.screen.orientation.addEventListener('change', fit);
   if (window.ResizeObserver) new ResizeObserver(fit).observe(board);
 
-  // ---- go -------------------------------------------------------------------------
-  newGame();
+  // ---- updates ---------------------------------------------------------------------
+  // The service worker takes over as soon as a new version installs, but the
+  // page keeps running the code it loaded. Installed PWAs are resumed far more
+  // often than relaunched, so: ask for an update check at launch, whenever the
+  // app is resumed or focused, and at every new game; and reload only inside
+  // newGame(), never mid-game or while the stats are open.
+  let swRegistration = null;
+  let updateReady = false;
 
-  // Offline support / installability. Service workers need http(s); when the
-  // page is opened from disk this is simply skipped.
+  function checkForUpdate() {
+    if (swRegistration) swRegistration.update().catch(() => {});
+  }
+
   if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
+    const hadController = !!navigator.serviceWorker.controller;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      // On a first install there was no controller before; that is not an update.
+      if (!hadController) return;
+      updateReady = true;
+      document.documentElement.dataset.swUpdate = 'ready';
+    });
     navigator.serviceWorker.register('./sw.js')
-      .then((reg) => { document.documentElement.dataset.sw = 'registered'; reg.update(); })
+      .then((reg) => { swRegistration = reg; document.documentElement.dataset.sw = 'registered'; reg.update().catch(() => {}); })
       .catch(() => { document.documentElement.dataset.sw = 'failed'; });
     navigator.serviceWorker.ready.then(() => { document.documentElement.dataset.sw = 'ready'; });
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) checkForUpdate(); });
+    window.addEventListener('focus', checkForUpdate);
   }
+
+  // ---- go -------------------------------------------------------------------------
+  newGame();
 
   // Debug hooks for the console and tests. dealExtra() deals three cards
   // regardless of whether a set is on the table (for layout checks).
