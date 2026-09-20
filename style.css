@@ -156,7 +156,11 @@ kbd {
 
 .board {
   flex: 1;
+  /* The grid's explicit tracks must never enlarge the board and push the
+     control bar off-screen: let it shrink in both axes and clip overflow. */
   min-height: 0;
+  min-width: 0;
+  overflow: hidden;
   display: grid;
   gap: var(--gap);
   place-content: center;
