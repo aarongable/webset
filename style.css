@@ -328,17 +328,17 @@ body[data-layout="landscape-phone"][data-side="right"] .board { padding-left: ca
 body[data-layout="landscape-phone"][data-side="left"] .board { padding-right: calc(12px + env(safe-area-inset-right)); }
 /* Text in the side bar is rotated to run along the strip, reading downwards
    when the strip is on the right and upwards when it is on the left. */
-body[data-layout="landscape-phone"] .status,
-body[data-layout="landscape-phone"] .btn.primary {
+body[data-layout="landscape-phone"] .bar .status,
+body[data-layout="landscape-phone"] .bar .btn.primary {
   writing-mode: vertical-rl;
 }
-body[data-layout="landscape-phone"][data-side="left"] .status,
-body[data-layout="landscape-phone"][data-side="left"] .btn.primary {
+body[data-layout="landscape-phone"][data-side="left"] .bar .status,
+body[data-layout="landscape-phone"][data-side="left"] .bar .btn.primary {
   transform: rotate(180deg);
 }
-body[data-layout="landscape-phone"] .status { line-height: 1; }
-body[data-layout="landscape-phone"] .actions { flex-direction: column-reverse; gap: 10px; }
-body[data-layout="landscape-phone"] .btn.primary { padding: 1.1em .5em; }
+body[data-layout="landscape-phone"] .bar .status { line-height: 1; }
+body[data-layout="landscape-phone"] .bar .actions { flex-direction: column-reverse; gap: 10px; }
+body[data-layout="landscape-phone"] .bar .btn.primary { padding: 1.1em .5em; }
 body[data-layout="landscape-phone"] .menu { top: auto; bottom: 0; }
 body[data-layout="landscape-phone"][data-side="right"] .menu { right: calc(100% + 6px); }
 body[data-layout="landscape-phone"][data-side="left"] .menu { right: auto; left: calc(100% + 6px); }
@@ -385,6 +385,13 @@ body.paused #app { filter: blur(14px); }
   width: min(460px, 100%);
   box-shadow: 0 16px 50px rgba(0, 0, 0, 0.25);
 }
+/* Dialogs never exceed the viewport; they scroll inside if they must. */
+.overlay:not(.scroll) .sheet {
+  max-height: calc(100dvh - 24px);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
 .page { width: min(760px, 100%); margin: 8px auto 24px; }
 .sheet h2, .page h2 { margin: 0 0 6px; font-size: 20px; font-weight: 600; }
 .muted { color: var(--muted); margin: 0 0 14px; }
@@ -484,3 +491,21 @@ body.paused #app { filter: blur(14px); }
 .sparkline circle { fill: var(--series-1); }
 
 .empty { color: var(--muted); padding: 24px 0; text-align: center; }
+
+/* ---- short viewports (a phone in landscape) ------------------------------ */
+/* A wider, flatter dialog so the last-card guess and the summary fit without
+   scrolling. Kept at the end of the file so it wins over the base rules. */
+@media (max-height: 520px) {
+  .overlay:not(.scroll) .sheet { width: min(640px, 100%); padding: 10px 16px 12px; }
+  .sheet h2 { font-size: 16px; margin-bottom: 0; }
+  .sheet .muted { font-size: 12px; margin-bottom: 6px; }
+  .guess-rows { gap: 5px; }
+  .guess-row { grid-template-columns: 4em repeat(3, 1fr) 1.2em; gap: 6px; }
+  .guess-row .label { font-size: 12px; }
+  .choice { aspect-ratio: 4 / 1; padding: 2% 5%; border-radius: 8px; }
+  .guess-result { margin-top: 6px; font-size: 14px; }
+  .sheet-actions { margin-top: 8px; }
+  .sheet .btn { padding: .35em .9em; }
+  .kv { gap: 1px 16px; font-size: 14px; }
+  .kv .sub { font-size: 12px; }
+}
